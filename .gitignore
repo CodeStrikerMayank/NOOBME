@@ -1,17 +1,20 @@
 # Python cache
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+**/__pycache__/**
+*.py[cod]
+*$py.class
 
 # Virtual environments
 .venv/
 venv/
 env/
+ENV/
 
 # IDE / Editor
 .idea/
 .vscode/
+*.swp
+*.swo
 
 # Logs
 *.log
@@ -20,5 +23,11 @@ env/
 .DS_Store
 Thumbs.db
 
-# Generated reports
+# Generated reports & temp outputs
+Reports/*.pdf
 *.pdf
+*.zip
+*.rar
+
+# AI / IDE metadata
+.gemini/

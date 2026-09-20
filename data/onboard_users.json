@@ -1,0 +1,28 @@
+{
+  "users": {
+    "admin": {
+      "username": "admin",
+      "name": "System Administrator",
+      "password_hash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+      "role": "DRDO Oversight & Admin",
+      "created_at": "2026-09-20T10:02:10.737829",
+      "designs": []
+    },
+    "engineer": {
+      "username": "engineer",
+      "name": "Lead Thermal Engineer",
+      "password_hash": "80ca306ac6e68366dd0a26125c9647e0c61fac6668cec6016f5fe30fb12e99bd",
+      "role": "Lead Thermal Systems Engineer",
+      "created_at": "2026-09-20T10:02:10.737882",
+      "designs": []
+    },
+    "captain_negi": {
+      "username": "captain_negi",
+      "name": "Captain Negi",
+      "password_hash": "c095d3f9add8a2237a0cc196cc762cf2e163edd5e7af424e04f2490d3a677f22",
+      "role": "Alpine Operations Commander",
+      "created_at": "2026-09-20T10:02:14.829828",
+      "designs": []
+    }
+  }
+}
