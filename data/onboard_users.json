@@ -103,6 +103,24 @@
   "activity_log": [
     {
       "username": "captain_negi07",
+      "timestamp": "2026-09-21 22:04:59",
+      "action": "Simulation Computed",
+      "details": "High-Performance Composite | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+    },
+    {
+      "username": "captain_negi07",
+      "timestamp": "2026-09-21 22:04:57",
+      "action": "Simulation Computed",
+      "details": "High-Performance Composite | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+    },
+    {
+      "username": "captain_negi07",
+      "timestamp": "2026-09-21 22:04:38",
+      "action": "Simulation Computed",
+      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+    },
+    {
+      "username": "captain_negi07",
       "timestamp": "2026-09-21 21:53:52",
       "action": "Simulation Computed",
       "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
