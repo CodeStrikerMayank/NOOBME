@@ -220,7 +220,38 @@
       <!-- Top Bar Header -->
       <header class="top-header">
         <div class="header-breadcrumbs">
+          <!-- 3-Bar / View Toggle Button -->
+          <button class="btn-three-bar-toggle" id="threeBarToggleBtn" title="Toggle Dashboard Panels / Maximize 3D Model">
+            <span class="three-bars-icon">
+              <span></span>
+              <span></span>
+              <span></span>
+            </span>
+            <span id="threeBarBtnText">Expand 3D Model</span>
+          </button>
+
           <span class="active-crumb" id="headerTitle">3D Thermal Model Solver</span>
+
+          <!-- View Mode Toggles (Dashboard vs 3D Max) -->
+          <div class="view-mode-trio" id="viewModeTrio">
+            <button class="trio-btn active" id="btnModeDashboard" title="Full Operational Dashboard">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+              </svg>
+              <span>Dashboard</span>
+            </button>
+            <button class="trio-btn" id="btnModeFull3D" title="Hide Dashboard Panels & Maximize 3D Model">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                <polyline points="2 17 12 22 22 17"/>
+                <polyline points="2 12 12 17 22 12"/>
+              </svg>
+              <span>Max 3D View</span>
+            </button>
+          </div>
         </div>
         <div class="header-actions">
           <button class="btn-admin-power hidden" id="adminPowerStressBtn" title="Chief Admin Power: Override Environmental Limits">
@@ -377,7 +408,14 @@
             <!-- Col 2: 3D Visualization -->
             <div class="solver-col viz-col">
               <div class="viz-header">
-                <h3 class="viz-title">3D THERMAL FINITE-ELEMENT PERSPECTIVE</h3>
+                <div class="viz-title-row">
+                  <h3 class="viz-title">3D THERMAL FINITE-ELEMENT PERSPECTIVE</h3>
+                  <span class="viz-live-tag">LIVE THREE.JS ENGINE</span>
+                </div>
+                <button class="btn-canvas-expand" id="canvasExpandBtn" title="Toggle Dashboard Panels / Maximize 3D View">
+                  <span class="three-bar-mini">≡</span>
+                  <span id="canvasExpandBtnText">Maximize 3D Model</span>
+                </button>
               </div>
 
               <div class="viewport-3d-container">
@@ -389,6 +427,26 @@
                   <button class="cam-btn" id="camTop" title="Top-Down Floorplan View">Top</button>
                   <button class="cam-btn" id="camFront" title="Front Elevation">Front</button>
                   <button class="cam-btn" id="camCut" title="Cross-Section Thermal View">Cut</button>
+                </div>
+
+                <!-- Floating 3D HUD (Visible when 3D is expanded) -->
+                <div class="floating-3d-hud hidden" id="floating3DHud">
+                  <div class="hud-pill">
+                    <span class="hud-dot"></span>
+                    <span>Tamb: <strong id="hudQuickTemp">-45°C</strong></span>
+                  </div>
+                  <div class="hud-pill">
+                    <span>Efficiency: <strong id="hudQuickEff" style="color:#22c55e;">94%</strong></span>
+                  </div>
+                  <div class="hud-pill">
+                    <span>Load: <strong id="hudQuickLoad">1.2 kWh/d</strong></span>
+                  </div>
+                  <button class="btn-hud-solve" id="hudQuickSolveBtn" title="Re-run Simulation in Immersive View">
+                    ⚡ Solve
+                  </button>
+                  <button class="btn-hud-restore" id="hudRestoreDashboardBtn" title="Show Dashboard Panels">
+                    ☰ Show Dashboard
+                  </button>
                 </div>
 
                 <!-- Temperature Colormap Legend on the right -->

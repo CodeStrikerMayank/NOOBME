@@ -24,9 +24,25 @@
       "role": "Alpine Operations Commander",
       "created_at": "2026-09-20T10:02:14.829828",
       "designs": []
+    },
+    "captain_negi07": {
+      "username": "captain_negi07",
+      "name": "Captain Negi",
+      "password_hash": "95d30169a59c418b52013315fc81bc99fdf0a7b03a116f346ab628496f349ed5",
+      "role": "Thermal Systems Analyst",
+      "created_at": "2026-09-21T21:18:46.595164",
+      "designs": []
     }
   },
   "login_history": [
+    {
+      "username": "admin",
+      "timestamp": "2026-09-21 21:17:56",
+      "role": "Chief Administrator",
+      "status": "Success",
+      "remember_me": true,
+      "client": "127.0.0.1"
+    },
     {
       "username": "engineer",
       "timestamp": "2026-09-21 19:49:14",
@@ -85,6 +101,30 @@
     }
   ],
   "activity_log": [
+    {
+      "username": "captain_negi07",
+      "timestamp": "2026-09-21 21:19:06",
+      "action": "Simulation Computed",
+      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+    },
+    {
+      "username": "captain_negi07",
+      "timestamp": "2026-09-21 21:18:48",
+      "action": "Simulation Computed",
+      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+    },
+    {
+      "username": "captain_negi07",
+      "timestamp": "2026-09-21 21:18:46",
+      "action": "Account Created",
+      "details": "Role: Thermal Systems Analyst"
+    },
+    {
+      "username": "admin",
+      "timestamp": "2026-09-21 21:17:57",
+      "action": "Simulation Computed",
+      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+    },
     {
       "username": "engineer",
       "timestamp": "2026-09-21 19:49:16",

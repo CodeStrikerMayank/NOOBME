@@ -543,6 +543,7 @@ async function runSolver(isSilent = false) {
     }
 
     buildShelterGeometry(r.t_out, r.t_in);
+    updateFloatingHudValues();
 
     if (!isSilent) {
       simStatusText.innerText = "0.38s (Complete)";
@@ -680,8 +681,114 @@ function setActiveNav(btn) {
   btn.classList.add("active");
 }
 
+// ---------------- INTERACTIVE VIEW & 3D MODEL EXPAND LOGIC ----------------
+let is3DExpanded = false;
+
+function updateFloatingHudValues() {
+  const temp = tempSlider ? tempSlider.value : "-45";
+  const eff = efficiencyVal ? efficiencyVal.innerText : "94%";
+  const load = heatingLoadVal ? heatingLoadVal.innerText : "1.2 kWh/day";
+  const qTemp = document.getElementById("hudQuickTemp");
+  const qEff = document.getElementById("hudQuickEff");
+  const qLoad = document.getElementById("hudQuickLoad");
+  if (qTemp) qTemp.innerText = `${temp}°C`;
+  if (qEff) qEff.innerText = eff;
+  if (qLoad) qLoad.innerText = load;
+}
+
+function toggle3DExpandedView(forceState = null) {
+  if (forceState !== null) {
+    is3DExpanded = forceState;
+  } else {
+    is3DExpanded = !is3DExpanded;
+  }
+
+  const threeBarBtn = document.getElementById("threeBarToggleBtn");
+  const threeBarText = document.getElementById("threeBarBtnText");
+  const canvasExpandBtn = document.getElementById("canvasExpandBtn");
+  const canvasExpandText = document.getElementById("canvasExpandBtnText");
+  const btnModeDash = document.getElementById("btnModeDashboard");
+  const btnMode3D = document.getElementById("btnModeFull3D");
+  const floatingHud = document.getElementById("floating3DHud");
+
+  if (is3DExpanded) {
+    document.body.classList.add("immersive-3d-expanded");
+    if (threeBarBtn) threeBarBtn.classList.add("active");
+    if (threeBarText) threeBarText.innerText = "Show Dashboard (☰)";
+    if (canvasExpandBtn) canvasExpandBtn.classList.add("active");
+    if (canvasExpandText) canvasExpandText.innerText = "Restore Dashboard";
+    if (btnModeDash) btnModeDash.classList.remove("active");
+    if (btnMode3D) btnMode3D.classList.add("active");
+    if (floatingHud) {
+      floatingHud.classList.remove("hidden");
+      updateFloatingHudValues();
+    }
+    showToast("Expanded 3D Model Focus (Dashboard Panels Hidden)", "🔲");
+  } else {
+    document.body.classList.remove("immersive-3d-expanded");
+    if (threeBarBtn) threeBarBtn.classList.remove("active");
+    if (threeBarText) threeBarText.innerText = "Expand 3D Model";
+    if (canvasExpandBtn) canvasExpandBtn.classList.remove("active");
+    if (canvasExpandText) canvasExpandText.innerText = "Maximize 3D Model";
+    if (btnModeDash) btnModeDash.classList.add("active");
+    if (btnMode3D) btnMode3D.classList.remove("active");
+    if (floatingHud) floatingHud.classList.add("hidden");
+    showToast("Restored Full Operational Dashboard", "📊");
+  }
+
+  // Smooth resize of Three.js canvas
+  setTimeout(onWindowResize, 60);
+  setTimeout(onWindowResize, 180);
+  setTimeout(onWindowResize, 350);
+}
+
+// 3-Bar Header Button
+const threeBarToggleBtn = document.getElementById("threeBarToggleBtn");
+if (threeBarToggleBtn) {
+  threeBarToggleBtn.addEventListener("click", () => toggle3DExpandedView());
+}
+
+// 3-Button View Segment
+const btnModeDashboard = document.getElementById("btnModeDashboard");
+if (btnModeDashboard) {
+  btnModeDashboard.addEventListener("click", () => toggle3DExpandedView(false));
+}
+
+const btnModeFull3D = document.getElementById("btnModeFull3D");
+if (btnModeFull3D) {
+  btnModeFull3D.addEventListener("click", () => toggle3DExpandedView(true));
+}
+
+// Canvas Expand Button in 3D Header
+const canvasExpandBtn = document.getElementById("canvasExpandBtn");
+if (canvasExpandBtn) {
+  canvasExpandBtn.addEventListener("click", () => toggle3DExpandedView());
+}
+
+// Floating HUD controls
+const hudRestoreDashboardBtn = document.getElementById("hudRestoreDashboardBtn");
+if (hudRestoreDashboardBtn) {
+  hudRestoreDashboardBtn.addEventListener("click", () => toggle3DExpandedView(false));
+}
+
+const hudQuickSolveBtn = document.getElementById("hudQuickSolveBtn");
+if (hudQuickSolveBtn) {
+  hudQuickSolveBtn.addEventListener("click", async () => {
+    await runSolver(false);
+    updateFloatingHudValues();
+  });
+}
+
+// Keyboard shortcut: Escape to restore dashboard from 3D mode
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && is3DExpanded) {
+    toggle3DExpandedView(false);
+  }
+});
+
 navDashboard.addEventListener("click", () => {
   setActiveNav(navDashboard);
+  toggle3DExpandedView(false);
   showToast("Switched to User Dashboard");
 });
 
