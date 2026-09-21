@@ -355,6 +355,18 @@ function initThreeScene() {
   animate();
 }
 
+function onWindowResize() {
+  if (!renderer || !camera) return;
+  const container = document.getElementById("threeCanvasContainer");
+  if (!container) return;
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+  if (width === 0 || height === 0) return;
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+  renderer.setSize(width, height);
+}
+
 function buildGridAndAxes() {
   const gridHelper = new THREE.GridHelper(8, 8, 0xcbd5e1, 0xe2e8f0);
   gridHelper.position.set(3, 0, 2.5);

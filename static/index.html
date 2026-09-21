@@ -308,51 +308,33 @@
         </div>
       </header>
 
-      <!-- Dashboard Workspace Body -->
+      <!-- Dashboard Workspace Body: Unified 1-Screen Interactive Flow -->
       <div class="workspace-grid">
         <!-- Center Left: 3D Thermal Model Solver Card -->
         <section class="solver-card">
           <div class="card-header-row">
             <h2 class="card-main-title">3D THERMAL MODEL SOLVER</h2>
-
-            <!-- Extreme Location Preset Bar -->
-            <div class="preset-picker-wrap">
-              <label class="preset-label">EXTREME COLD PRESET:</label>
-              <select id="presetLocationSelect" class="preset-select">
-                <option value="Custom">Custom Parameters</option>
-                <option value="Siachen Glacier Base" selected>Siachen Glacier Base (-45°C)</option>
-                <option value="Dras Sector">Dras Sector (-35°C)</option>
-                <option value="Leh Alpine Zone">Leh Alpine Zone (-25°C)</option>
-                <option value="Arctic Expedition Station">Arctic Expedition (-50°C)</option>
-                <option value="Antarctic Research Pod">Antarctic Research Pod (-60°C)</option>
-              </select>
-            </div>
+            <div class="viz-live-tag">ISO 7730 FINITE-VOLUME MATRIX</div>
           </div>
 
           <div class="solver-layout">
-            <!-- Col 1: Parameters -->
+            <!-- Col 1: Logical Engineering Parameters (Outside -> Inside -> Wall) -->
             <div class="solver-col params-col">
-              <!-- Insulation Thickness Slider -->
+              <!-- Parameter 01: Exterior Climate Boundary -->
               <div class="param-group">
                 <div class="param-header">
-                  <label class="param-label">INSULATION THICKNESS (mm)</label>
-                  <span class="param-badge" id="thicknessBadge">350</span>
-                </div>
-                <div class="slider-wrapper">
-                  <input type="range" id="thicknessSlider" min="20" max="600" value="350" step="5">
-                  <div class="slider-scale">
-                    <span>20</span>
-                    <span>300</span>
-                    <span>600</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Environment Temperature Slider (Now down to -60°C) -->
-              <div class="param-group">
-                <div class="param-header">
-                  <label class="param-label">ENVIRONMENT TEMPERATURE (°C)</label>
+                  <label class="param-label">01. EXTERIOR CLIMATE</label>
                   <span class="param-badge extreme-cold" id="tempBadge">-45</span>
+                </div>
+                <div class="preset-picker-wrap">
+                  <select id="presetLocationSelect" class="preset-select" style="width: 100%; margin-bottom: 6px;">
+                    <option value="Custom">Custom Location Parameters</option>
+                    <option value="Siachen Glacier Base" selected>Siachen Glacier (-45°C)</option>
+                    <option value="Dras Sector">Dras Sector (-35°C)</option>
+                    <option value="Leh Alpine Zone">Leh Alpine Zone (-25°C)</option>
+                    <option value="Arctic Expedition Station">Arctic Expedition (-50°C)</option>
+                    <option value="Antarctic Research Pod">Antarctic Polar (-60°C)</option>
+                  </select>
                 </div>
                 <div class="slider-wrapper">
                   <input type="range" id="tempSlider" min="-60" max="40" value="-45" step="1">
@@ -363,12 +345,18 @@
                     <span>+40°C</span>
                   </div>
                 </div>
+                <button class="btn-subtle" id="liveWeatherBtn" style="width: 100%; margin-top: 6px;">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+                  </svg>
+                  <span>Sync Open-Meteo Climate</span>
+                </button>
               </div>
 
-              <!-- Shelter Occupancy Capacity -->
+              <!-- Parameter 02: Shelter Capacity & Personnel -->
               <div class="param-group">
                 <div class="param-header">
-                  <label class="param-label">SHELTER OCCUPANCY CAPACITY</label>
+                  <label class="param-label">02. SHELTER OCCUPANCY</label>
                   <span class="param-badge" id="occupancyBadge">8 Persons</span>
                 </div>
                 <select id="occupancySelect" class="material-pill-select">
@@ -380,37 +368,36 @@
                 </select>
               </div>
 
-              <!-- Shelter Material Selector -->
+              <!-- Parameter 03: Core Insulation & Thickness -->
               <div class="param-group">
-                <label class="param-label">SHELTER CORE MATERIAL</label>
-                <div class="custom-select-wrapper">
-                  <select id="materialSelect" class="material-pill-select">
-                    <option value="Aerogel" selected>Aerogel Super-insulator (k=0.015)</option>
-                    <option value="High-Performance Composite">High-Performance Composite (k=0.022)</option>
-                    <option value="XPS">XPS High-Density Foam (k=0.034)</option>
-                    <option value="EPS">EPS Expanded Polystyrene (k=0.040)</option>
-                    <option value="Mineral Wool">Mineral Wool Stonecore (k=0.040)</option>
-                  </select>
+                <label class="param-label">03. CORE INSULATION & WALL</label>
+                <select id="materialSelect" class="material-pill-select" style="margin-bottom: 6px;">
+                  <option value="Aerogel" selected>Aerogel Super-insulator (k=0.015)</option>
+                  <option value="High-Performance Composite">High-Performance Composite (k=0.022)</option>
+                  <option value="XPS">XPS High-Density Foam (k=0.034)</option>
+                  <option value="EPS">EPS Expanded Polystyrene (k=0.040)</option>
+                  <option value="Mineral Wool">Mineral Wool Stonecore (k=0.040)</option>
+                </select>
+                <div class="param-header">
+                  <span style="font-size:0.68rem;font-weight:700;color:var(--text-muted);">WALL THICKNESS (mm)</span>
+                  <span class="param-badge" id="thicknessBadge">350</span>
                 </div>
-              </div>
-
-              <!-- Quick Live Climate Fetch -->
-              <div class="quick-climate-btn-box">
-                <button class="btn-subtle" id="liveWeatherBtn">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
-                  </svg>
-                  <span>Sync Open-Meteo Weather</span>
-                </button>
+                <div class="slider-wrapper">
+                  <input type="range" id="thicknessSlider" min="20" max="600" value="350" step="5">
+                  <div class="slider-scale">
+                    <span>20</span>
+                    <span>300</span>
+                    <span>600</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <!-- Col 2: 3D Visualization -->
+            <!-- Col 2: 3D Visualization Model (Generous Center Viewport) -->
             <div class="solver-col viz-col">
               <div class="viz-header">
                 <div class="viz-title-row">
-                  <h3 class="viz-title">3D THERMAL FINITE-ELEMENT PERSPECTIVE</h3>
-                  <span class="viz-live-tag">LIVE THREE.JS ENGINE</span>
+                  <h3 class="viz-title">3D FINITE-ELEMENT SHELTER MODEL</h3>
                 </div>
                 <button class="btn-canvas-expand" id="canvasExpandBtn" title="Toggle Dashboard Panels / Maximize 3D View">
                   <span class="three-bar-mini">≡</span>
@@ -463,42 +450,41 @@
                 </div>
               </div>
 
-              <div class="viz-caption">Interactive 3D Thermal Shelter (Drag to rotate, scroll to zoom)</div>
-            </div>
-
-            <!-- Col 3: Solver Execution Card -->
-            <div class="solver-col exec-col">
-              <h3 class="exec-title">SOLVER EXECUTION</h3>
-
-              <div class="simulation-hero-card" id="startSimBtn">
-                <div class="hero-inner">
-                  <span class="hero-subtitle">RUN SOLVER</span>
-                  <h2 class="hero-heading">START<br>THERMAL<br>SIMULATION</h2>
-                  <div class="ai-badge">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
-                      <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
-                    </svg>
-                    <span>ISO 7730 OPTIMIZED</span>
-                  </div>
-                </div>
-                <div class="hero-glow"></div>
-              </div>
-
-              <div class="sim-progress-box">
-                <div class="progress-bar-bg">
-                  <div class="progress-bar-fill" id="simProgressBar"></div>
-                </div>
-                <div class="progress-status">
-                  <span>Simulation time:</span>
-                  <strong id="simStatusText">0.38s (Ready)</strong>
-                </div>
-              </div>
+              <div class="viz-caption">Interactive 3D Thermal Model (Rotate, Zoom, and Inspect Temperature Gradients)</div>
             </div>
           </div>
         </section>
 
-        <!-- Right Side: Analytics Summary & PDF Generation -->
+        <!-- Right Side: Unified Action, Analytics & Blueprint Tower -->
         <aside class="side-metrics">
+          <!-- Solver Execution Trigger Card -->
+          <div class="metrics-card exec-trigger-card">
+            <h3 class="side-card-title">SOLVER ENGINE</h3>
+            <div class="simulation-hero-card" id="startSimBtn">
+              <div class="hero-inner">
+                <span class="hero-subtitle">RUN SOLVER</span>
+                <h2 class="hero-heading">START THERMAL<br>SIMULATION</h2>
+                <div class="ai-badge">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                  </svg>
+                  <span>ISO 7730 VERIFIED</span>
+                </div>
+              </div>
+              <div class="hero-glow"></div>
+            </div>
+
+            <div class="sim-progress-box">
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="simProgressBar"></div>
+              </div>
+              <div class="progress-status">
+                <span>Computation:</span>
+                <strong id="simStatusText">0.38s (Ready)</strong>
+              </div>
+            </div>
+          </div>
+
           <!-- Analytics Summary Card -->
           <div class="metrics-card">
             <h3 class="side-card-title">ANALYTICS SUMMARY</h3>
@@ -526,7 +512,7 @@
 
             <!-- Alpine Fuel Consumption Metric -->
             <div class="metric-item">
-              <span class="metric-label">DIESEL FUEL LOGISTICS (ESTIMATED)</span>
+              <span class="metric-label">DIESEL FUEL LOGISTICS</span>
               <div class="metric-value-box highlight-fuel">
                 <span class="metric-number" id="dieselFuelVal">0.2 L/day</span>
               </div>

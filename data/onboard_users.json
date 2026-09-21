@@ -103,6 +103,30 @@
   "activity_log": [
     {
       "username": "captain_negi07",
+      "timestamp": "2026-09-21 21:53:52",
+      "action": "Simulation Computed",
+      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+    },
+    {
+      "username": "captain_negi07",
+      "timestamp": "2026-09-21 21:53:47",
+      "action": "Simulation Computed",
+      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+    },
+    {
+      "username": "captain_negi07",
+      "timestamp": "2026-09-21 21:53:38",
+      "action": "Simulation Computed",
+      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+    },
+    {
+      "username": "captain_negi07",
+      "timestamp": "2026-09-21 21:35:16",
+      "action": "Simulation Computed",
+      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+    },
+    {
+      "username": "captain_negi07",
       "timestamp": "2026-09-21 21:19:06",
       "action": "Simulation Computed",
       "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
