@@ -95,6 +95,12 @@
   "activity_log": [
     {
       "username": "engineer",
+      "timestamp": "2026-09-21 23:33:46",
+      "action": "Simulation Computed",
+      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+    },
+    {
+      "username": "engineer",
       "timestamp": "2026-09-21 23:24:17",
       "action": "Simulation Computed",
       "details": " | 350mm | Tamb -80.0\u00b0C | Eff 94%"
