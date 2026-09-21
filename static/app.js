@@ -83,10 +83,17 @@ const toastBox = document.getElementById("toastBox");
 
 // ---------------- TOAST FEEDBACK ----------------
 function showToast(message, icon = "✓") {
+  let box = document.getElementById("toastBox");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "toastBox";
+    box.className = "toast-box";
+    document.body.appendChild(box);
+  }
   const toast = document.createElement("div");
   toast.className = "toast-item";
   toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
-  toastBox.appendChild(toast);
+  box.appendChild(toast);
   setTimeout(() => {
     toast.style.opacity = "0";
     toast.style.transition = "opacity 0.3s ease";
@@ -475,32 +482,26 @@ function setupCameraButtons() {
     controls.update();
   };
 
-  document.getElementById("camIsometric").addEventListener("click", function() {
-    setCam(this, 13, 11, 14);
-    showToast("3D Isometric Camera Active");
-  });
-  document.getElementById("camTop").addEventListener("click", function() {
-    setCam(this, 3, 16, 2.5);
-    showToast("Top-Down Floorplan Camera Active");
-  });
-  document.getElementById("camFront").addEventListener("click", function() {
-    setCam(this, 3, 2.5, 14);
-    showToast("Front Elevation Camera Active");
-  });
-  document.getElementById("camCut").addEventListener("click", function() {
-    setCam(this, 8, 6, 8);
-    showToast("Section Thermal Cut Active");
-  });
-}
-
-function onWindowResize() {
-  const container = document.getElementById("threeCanvasContainer");
-  if (!container || !renderer) return;
-  const width = container.clientWidth;
-  const height = container.clientHeight;
-  camera.aspect = width / height;
-  camera.updateProjectionMatrix();
-  renderer.setSize(width, height);
+    const cIso = document.getElementById("camIsometric");
+    if (cIso) cIso.addEventListener("click", function() {
+      setCam(this, 13, 11, 14);
+      showToast("3D Isometric Camera Active");
+    });
+    const cTop = document.getElementById("camTop");
+    if (cTop) cTop.addEventListener("click", function() {
+      setCam(this, 3, 16, 2.5);
+      showToast("Top-Down Floorplan Camera Active");
+    });
+    const cFront = document.getElementById("camFront");
+    if (cFront) cFront.addEventListener("click", function() {
+      setCam(this, 3, 2.5, 14);
+      showToast("Front Elevation Camera Active");
+    });
+    const cCut = document.getElementById("camCut");
+    if (cCut) cCut.addEventListener("click", function() {
+      setCam(this, 8, 6, 8);
+      showToast("Section Thermal Cut Active");
+    });
 }
 
 function animate() {

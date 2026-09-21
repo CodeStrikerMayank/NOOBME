@@ -32,20 +32,28 @@
       "role": "Thermal Systems Analyst",
       "created_at": "2026-09-21T21:18:46.595164",
       "designs": []
+    },
+    "test_tester_999": {
+      "username": "test_tester_999",
+      "name": "Test Officer",
+      "password_hash": "b55c8792d1ce458e279308835f8a97b580263503e76e1998e279703e35ad0c2e",
+      "role": "Alpine Field Engineer",
+      "created_at": "2026-09-21T22:35:43.471155",
+      "designs": []
+    },
+    "field_test_1790012123": {
+      "username": "field_test_1790012123",
+      "name": "Field Captain Auto",
+      "password_hash": "860be2c576347b0ff4d68efe4125a1c1ec5092b750b650c5221be0728b9dcbe8",
+      "role": "Forward Alpine Lead",
+      "created_at": "2026-09-21T23:05:25.468241",
+      "designs": []
     }
   },
   "login_history": [
     {
-      "username": "admin",
-      "timestamp": "2026-09-21 21:17:56",
-      "role": "Chief Administrator",
-      "status": "Success",
-      "remember_me": true,
-      "client": "127.0.0.1"
-    },
-    {
       "username": "engineer",
-      "timestamp": "2026-09-21 19:49:14",
+      "timestamp": "2026-09-21 23:24:15",
       "role": "Lead Thermal Systems Engineer",
       "status": "Success",
       "remember_me": true,
@@ -53,23 +61,23 @@
     },
     {
       "username": "admin",
-      "timestamp": "2026-09-21 19:39:45",
+      "timestamp": "2026-09-21 23:09:18",
       "role": "Chief Administrator",
       "status": "Success",
       "remember_me": true,
       "client": "127.0.0.1"
     },
     {
-      "username": "admin",
-      "timestamp": "2026-09-21 19:37:21",
-      "role": "Chief Administrator",
+      "username": "engineer",
+      "timestamp": "2026-09-21 23:05:23",
+      "role": "Lead Thermal Systems Engineer",
       "status": "Success",
-      "remember_me": true,
+      "remember_me": false,
       "client": "127.0.0.1"
     },
     {
       "username": "admin",
-      "timestamp": "2026-09-21 19:35:08",
+      "timestamp": "2026-09-21 23:05:21",
       "role": "Chief Administrator",
       "status": "Success",
       "remember_me": false,
@@ -77,24 +85,8 @@
     },
     {
       "username": "admin",
-      "timestamp": "2026-09-21 19:10:17",
-      "role": "DRDO Oversight & Admin",
-      "status": "Success",
-      "remember_me": true,
-      "client": "127.0.0.1"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 19:08:56",
-      "role": "DRDO Oversight & Admin",
-      "status": "Success",
-      "remember_me": true,
-      "client": "127.0.0.1"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 19:06:31",
-      "role": "DRDO Oversight & Admin",
+      "timestamp": "2026-09-21 23:05:19",
+      "role": "Chief Administrator",
       "status": "Success",
       "remember_me": true,
       "client": "127.0.0.1"
@@ -102,139 +94,111 @@
   ],
   "activity_log": [
     {
-      "username": "captain_negi07",
-      "timestamp": "2026-09-21 22:04:59",
+      "username": "engineer",
+      "timestamp": "2026-09-21 23:24:17",
       "action": "Simulation Computed",
-      "details": "High-Performance Composite | 350mm | Tamb -45.0\u00b0C | Eff 94%"
-    },
-    {
-      "username": "captain_negi07",
-      "timestamp": "2026-09-21 22:04:57",
-      "action": "Simulation Computed",
-      "details": "High-Performance Composite | 350mm | Tamb -45.0\u00b0C | Eff 94%"
-    },
-    {
-      "username": "captain_negi07",
-      "timestamp": "2026-09-21 22:04:38",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
-    },
-    {
-      "username": "captain_negi07",
-      "timestamp": "2026-09-21 21:53:52",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
-    },
-    {
-      "username": "captain_negi07",
-      "timestamp": "2026-09-21 21:53:47",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
-    },
-    {
-      "username": "captain_negi07",
-      "timestamp": "2026-09-21 21:53:38",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
-    },
-    {
-      "username": "captain_negi07",
-      "timestamp": "2026-09-21 21:35:16",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
-    },
-    {
-      "username": "captain_negi07",
-      "timestamp": "2026-09-21 21:19:06",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
-    },
-    {
-      "username": "captain_negi07",
-      "timestamp": "2026-09-21 21:18:48",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
-    },
-    {
-      "username": "captain_negi07",
-      "timestamp": "2026-09-21 21:18:46",
-      "action": "Account Created",
-      "details": "Role: Thermal Systems Analyst"
+      "details": " | 350mm | Tamb -80.0\u00b0C | Eff 94%"
     },
     {
       "username": "admin",
-      "timestamp": "2026-09-21 21:17:57",
+      "timestamp": "2026-09-21 23:14:14",
+      "action": "Simulation Computed",
+      "details": " | 350mm | Tamb -80.0\u00b0C | Eff 94%"
+    },
+    {
+      "username": "admin",
+      "timestamp": "2026-09-21 23:12:07",
+      "action": "Simulation Computed",
+      "details": "Aerogel | 465mm | Tamb -10.0\u00b0C | Eff 95%"
+    },
+    {
+      "username": "admin",
+      "timestamp": "2026-09-21 23:11:44",
+      "action": "Simulation Computed",
+      "details": "Aerogel | 465mm | Tamb -10.0\u00b0C | Eff 95%"
+    },
+    {
+      "username": "admin",
+      "timestamp": "2026-09-21 23:11:12",
+      "action": "Simulation Computed",
+      "details": "Aerogel | 350mm | Tamb -10.0\u00b0C | Eff 94%"
+    },
+    {
+      "username": "admin",
+      "timestamp": "2026-09-21 23:11:00",
+      "action": "Simulation Computed",
+      "details": "Aerogel | 350mm | Tamb 6.0\u00b0C | Eff 94%"
+    },
+    {
+      "username": "admin",
+      "timestamp": "2026-09-21 23:09:20",
       "action": "Simulation Computed",
       "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
     },
     {
       "username": "engineer",
-      "timestamp": "2026-09-21 19:49:16",
+      "timestamp": "2026-09-21 23:08:09",
       "action": "Simulation Computed",
       "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
     },
     {
       "username": "admin",
-      "timestamp": "2026-09-21 19:39:48",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 19:37:24",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 19:15:21",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 19:15:06",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 19:13:44",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 19:11:52",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 19:11:25",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 19:10:19",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 19:08:59",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 19:06:42",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+      "timestamp": "2026-09-21 23:05:51",
+      "action": "System Logs Purged",
+      "details": "Admin executed audit log clearance protocol"
     }
   ],
   "reports_generated": [
+    {
+      "username": "admin",
+      "timestamp": "2026-09-21 23:17:03",
+      "material": "",
+      "thickness": "350mm",
+      "efficiency": "94%",
+      "heating_load": "0.5 kWh/day",
+      "diesel_liters": "0.1 L/day",
+      "status": "OVER HEATED"
+    },
+    {
+      "username": "admin",
+      "timestamp": "2026-09-21 23:05:49",
+      "material": "Expanded Polystyrene (EPS)",
+      "thickness": "250mm",
+      "efficiency": "91%",
+      "heating_load": "0.5 kWh/day",
+      "diesel_liters": "0.1 L/day",
+      "status": "OVER HEATED"
+    },
+    {
+      "username": "guest",
+      "timestamp": "2026-09-21 22:35:43",
+      "material": "High-Performance Composite",
+      "thickness": "250mm",
+      "efficiency": "91%",
+      "heating_load": "0.5 kWh/day",
+      "diesel_liters": "0.1 L/day",
+      "status": "OVER HEATED"
+    },
+    {
+      "username": "admin",
+      "timestamp": "2026-09-21 22:28:58",
+      "material": "Aerogel",
+      "thickness": "350mm",
+      "efficiency": "94%",
+      "heating_load": "0.5 kWh/day",
+      "diesel_liters": "0.1 L/day",
+      "status": "OVER HEATED"
+    },
+    {
+      "username": "engineer",
+      "timestamp": "2026-09-21 22:26:06",
+      "material": "",
+      "thickness": "350mm",
+      "efficiency": "94%",
+      "heating_load": "0.5 kWh/day",
+      "diesel_liters": "0.1 L/day",
+      "status": "CRITICAL POINT"
+    },
     {
       "username": "admin",
       "timestamp": "2026-09-21 19:19:07",
