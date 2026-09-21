@@ -3,23 +3,22 @@ import urllib.request
 import urllib.parse
 import json
 import hashlib
-import time
-import threading
 from datetime import datetime
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Response, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
 from core.thermo_solver import (
     calculate_state,
     generate_architectural_shelter,
-    MATERIAL_DATABASE
+    MATERIAL_DATABASE,
+    EXTREME_LOCATION_PRESETS
 )
 from core.pdf_generator import generate_blueprint_pdf
 
-app = FastAPI(title="ThermoShelter AI API", version="2.0.0")
+app = FastAPI(title="ThermoShelter AI API", version="2.5.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -29,75 +28,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ---------------- HEALTH & KEEP-AWAKE MONITORING ----------------
-SERVER_START_TIME = time.time()
-HEALTH_STATS = {
-    "pings_received": 0,
-    "last_ping_time": None,
-    "self_pings_sent": 0,
-    "last_self_ping_time": None,
-    "keep_awake_running": False
-}
-
-def render_keep_awake_worker():
-    """Background worker to ping self and prevent Render free tier from sleeping after 15 minutes."""
-    HEALTH_STATS["keep_awake_running"] = True
-    interval = int(os.environ.get("KEEP_AWAKE_INTERVAL_SECONDS", 600))  # default 10m
-    
-    # Wait 20 seconds after startup before starting ping loop
-    time.sleep(20)
-    
-    while True:
-        target_url = os.environ.get("RENDER_EXTERNAL_URL", os.environ.get("APP_URL"))
-        if target_url:
-            health_url = f"{target_url.rstrip('/')}/health"
-            try:
-                req = urllib.request.Request(health_url, headers={"User-Agent": "ThermoShelter-KeepAwake/2.0"})
-                with urllib.request.urlopen(req, timeout=12) as res:
-                    HEALTH_STATS["self_pings_sent"] += 1
-                    HEALTH_STATS["last_self_ping_time"] = datetime.now().isoformat()
-            except Exception as e:
-                print(f"[KeepAwake] Ping notice for {health_url}: {e}")
-        time.sleep(interval)
-
-@app.on_event("startup")
-def start_keep_awake():
-    t = threading.Thread(target=render_keep_awake_worker, daemon=True)
-    t.start()
-
-@app.get("/health")
-@app.get("/api/health")
-@app.get("/healthz")
-def health_check():
-    """Health check endpoint for Render, UptimeRobot, and cron-job.org."""
-    HEALTH_STATS["pings_received"] += 1
-    HEALTH_STATS["last_ping_time"] = datetime.now().isoformat()
-    uptime_sec = time.time() - SERVER_START_TIME
-    hours, rem = divmod(int(uptime_sec), 3600)
-    mins, secs = divmod(rem, 60)
-    
-    data = load_onboard_data()
-    users_count = len(data.get("users", {}))
-    
-    return {
-        "status": "healthy",
-        "service": "ThermoShelter-AI Engine",
-        "version": "2.0.0",
-        "uptime_seconds": round(uptime_sec, 1),
-        "uptime_formatted": f"{hours}h {mins}m {secs}s",
-        "server_time": datetime.now().isoformat(),
-        "pings_received": HEALTH_STATS["pings_received"],
-        "last_ping_time": HEALTH_STATS["last_ping_time"],
-        "self_pings_sent": HEALTH_STATS["self_pings_sent"],
-        "last_self_ping_time": HEALTH_STATS["last_self_ping_time"],
-        "keep_awake_running": HEALTH_STATS["keep_awake_running"],
-        "onboard_users_count": users_count,
-        "environment": "render" if os.environ.get("RENDER") else "local",
-        "public_url": os.environ.get("RENDER_EXTERNAL_URL", os.environ.get("APP_URL", "http://localhost:8000"))
-    }
-
-
-# ---------------- ONBOARD USER STORAGE ----------------
+# ---------------- ONBOARD AUDIT & STORAGE ----------------
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 os.makedirs(DATA_DIR, exist_ok=True)
 ONBOARD_DATA_FILE = os.path.join(DATA_DIR, "onboard_users.json")
@@ -111,29 +42,57 @@ def load_onboard_data() -> Dict[str, Any]:
             "users": {
                 "admin": {
                     "username": "admin",
-                    "name": "System Administrator",
-                    "password_hash": hash_pw("admin123"),
-                    "role": "DRDO Oversight & Admin",
+                    "name": "DRDO Oversight & Admin",
+                    "password_hash": hash_pw("12345"),
+                    "password_hash_alt": hash_pw("admin123"),
+                    "role": "Chief Administrator",
                     "created_at": datetime.now().isoformat(),
                     "designs": []
                 },
                 "engineer": {
                     "username": "engineer",
-                    "name": "Lead Thermal Engineer",
+                    "name": "Lead Thermal Systems Engineer",
                     "password_hash": hash_pw("engineer123"),
-                    "role": "Lead Thermal Systems Engineer",
+                    "password_hash_alt": hash_pw("12345"),
+                    "role": "Alpine Design Engineer",
                     "created_at": datetime.now().isoformat(),
                     "designs": []
                 }
-            }
+            },
+            "login_history": [
+                {
+                    "username": "admin",
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "role": "Chief Administrator",
+                    "status": "Success",
+                    "client": "Onboard Workstation"
+                }
+            ],
+            "activity_log": [
+                {
+                    "username": "system",
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "action": "Database Initialized",
+                    "details": "Ready for high-capacity sub-zero thermal simulation"
+                }
+            ],
+            "reports_generated": []
         }
         save_onboard_data(default_data)
         return default_data
     try:
         with open(ONBOARD_DATA_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
+            # Ensure admin password accepts 12345
+            if "users" in data and "admin" in data["users"]:
+                data["users"]["admin"]["password_hash"] = hash_pw("12345")
+                data["users"]["admin"]["password_hash_alt"] = hash_pw("admin123")
+            data.setdefault("login_history", [])
+            data.setdefault("activity_log", [])
+            data.setdefault("reports_generated", [])
+            return data
     except Exception:
-        return {"users": {}}
+        return {"users": {}, "login_history": [], "activity_log": [], "reports_generated": []}
 
 def save_onboard_data(data: Dict[str, Any]):
     with open(ONBOARD_DATA_FILE, "w", encoding="utf-8") as f:
@@ -151,10 +110,13 @@ class SolveRequest(BaseModel):
     relative_humidity: float = 50.0
     wind_speed: float = 0.5
     solar_radiation: float = 150.0
+    occupancy_count: int = 6
+    username: Optional[str] = "guest"
 
 class LoginRequest(BaseModel):
     username: str
     password: str
+    remember_me: Optional[bool] = False
 
 class SignUpRequest(BaseModel):
     username: str
@@ -164,31 +126,58 @@ class SignUpRequest(BaseModel):
 
 class SaveDesignRequest(BaseModel):
     username: str
-    design_name: Optional[str] = "Standard Alpine Shelter"
+    design_name: Optional[str] = "Alpine Emergency Shelter"
     parameters: Dict[str, Any]
     results: Dict[str, Any]
 
 # ---------------- AUTH ENDPOINTS ----------------
 @app.post("/api/auth/login")
-def login(req: LoginRequest):
+def login(req: LoginRequest, request: Request):
     data = load_onboard_data()
     users = data.get("users", {})
-    user = users.get(req.username.strip())
-    if not user or user.get("password_hash") != hash_pw(req.password):
-        raise HTTPException(status_code=401, detail="Invalid username or password.")
+    uname = req.username.strip().lower()
+    
+    # Special admin check (accepts 12345 or admin123)
+    if uname == "admin":
+        if req.password not in ["12345", "admin123"]:
+            raise HTTPException(status_code=401, detail="Invalid admin password. Default is 12345.")
+        user = users.get("admin")
+    else:
+        user = users.get(uname)
+        if not user:
+            raise HTTPException(status_code=401, detail="User account not found.")
+        pw_hash = hash_pw(req.password)
+        if user.get("password_hash") != pw_hash and user.get("password_hash_alt") != pw_hash:
+            raise HTTPException(status_code=401, detail="Invalid username or password.")
+    
+    # Log session in audit history
+    login_entry = {
+        "username": user["username"],
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "role": user.get("role", "Engineer"),
+        "status": "Success",
+        "remember_me": bool(req.remember_me),
+        "client": request.client.host if request.client else "Localhost"
+    }
+    data.setdefault("login_history", []).insert(0, login_entry)
+    # Cap history at 100 entries
+    data["login_history"] = data["login_history"][:100]
+    save_onboard_data(data)
+
     return {
         "status": "success",
         "user": {
             "username": user["username"],
             "name": user["name"],
             "role": user.get("role", "Engineer"),
-            "designs": user.get("designs", [])
+            "designs": user.get("designs", []),
+            "remember_me": req.remember_me
         }
     }
 
 @app.post("/api/auth/signup")
 def signup(req: SignUpRequest):
-    u = req.username.strip()
+    u = req.username.strip().lower()
     if not u:
         raise HTTPException(status_code=400, detail="Username is required.")
     if len(req.password) < 4:
@@ -207,7 +196,16 @@ def signup(req: SignUpRequest):
         "created_at": datetime.now().isoformat(),
         "designs": []
     }
+    
+    # Log signup
+    data.setdefault("activity_log", []).insert(0, {
+        "username": u,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "action": "Account Created",
+        "details": f"Role: {users[u]['role']}"
+    })
     save_onboard_data(data)
+    
     return {
         "status": "success",
         "user": {
@@ -218,78 +216,46 @@ def signup(req: SignUpRequest):
         }
     }
 
-@app.post("/api/auth/save-design")
-def save_user_design(req: SaveDesignRequest):
+# ---------------- ADMIN AUDIT TELEMETRY ----------------
+@app.get("/api/admin/audit")
+def get_admin_audit_data():
+    """Returns complete onboard storage data for the admin dashboard."""
     data = load_onboard_data()
-    users = data.setdefault("users", {})
-    if req.username not in users:
-        raise HTTPException(status_code=404, detail="User not found in onboard system.")
-    
-    design_entry = {
-        "id": f"design_{len(users[req.username].get('designs', [])) + 1}",
-        "name": req.design_name,
-        "saved_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "parameters": req.parameters,
-        "results": req.results
-    }
-    users[req.username].setdefault("designs", []).insert(0, design_entry)
-    save_onboard_data(data)
-    return {"status": "success", "design": design_entry}
-
-@app.get("/api/auth/users")
-def list_onboard_users():
-    data = load_onboard_data()
-    return [
+    users_summary = [
         {
             "username": u["username"],
             "name": u["name"],
             "role": u.get("role", "User"),
-            "created_at": u.get("created_at", "System Default"),
+            "created_at": u.get("created_at", "Pre-configured"),
             "designs_count": len(u.get("designs", []))
         }
         for u in data.get("users", {}).values()
     ]
+    
+    # Storage file metrics
+    storage_size_kb = 0
+    if os.path.exists(ONBOARD_DATA_FILE):
+        storage_size_kb = round(os.path.getsize(ONBOARD_DATA_FILE) / 1024, 2)
 
-@app.get("/api/auth/user/{username}")
-def get_user_profile(username: str):
-    data = load_onboard_data()
-    users = data.get("users", {})
-    user = users.get(username.strip())
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found in onboard system.")
     return {
         "status": "success",
-        "user": {
-            "username": user["username"],
-            "name": user["name"],
-            "role": user.get("role", "User"),
-            "created_at": user.get("created_at", "System Default"),
-            "designs": user.get("designs", [])
-        }
+        "total_users": len(users_summary),
+        "storage_size_kb": storage_size_kb,
+        "storage_path": ONBOARD_DATA_FILE,
+        "users": users_summary,
+        "login_history": data.get("login_history", [])[:30],
+        "activity_log": data.get("activity_log", [])[:30],
+        "reports_generated": data.get("reports_generated", [])[:30]
     }
 
-@app.delete("/api/auth/user/{username}/design/{design_id}")
-def delete_user_design(username: str, design_id: str):
-    data = load_onboard_data()
-    users = data.get("users", {})
-    user = users.get(username.strip())
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found in onboard system.")
-    
-    designs = user.get("designs", [])
-    updated_designs = [d for d in designs if d.get("id") != design_id]
-    if len(updated_designs) == len(designs):
-        raise HTTPException(status_code=404, detail="Design not found.")
-    
-    user["designs"] = updated_designs
-    save_onboard_data(data)
-    return {"status": "success", "message": "Design deleted successfully."}
-
-
-# ---------------- SIMULATION ENDPOINTS ----------------
+# ---------------- SIMULATION & PDF ENDPOINTS ----------------
 @app.get("/api/materials")
 def get_materials():
     return MATERIAL_DATABASE
+
+@app.get("/api/presets")
+def get_presets():
+    return EXTREME_LOCATION_PRESETS
 
 @app.post("/api/solve")
 def solve_thermal_model(req: SolveRequest):
@@ -304,13 +270,26 @@ def solve_thermal_model(req: SolveRequest):
             shelter_height=req.shelter_height,
             relative_humidity=req.relative_humidity,
             wind_speed=req.wind_speed,
-            solar_radiation=req.solar_radiation
+            solar_radiation=req.solar_radiation,
+            occupancy_count=req.occupancy_count
         )
         shelter_3d = generate_architectural_shelter(
             thickness_mm=req.thickness_mm,
             ambient_temp=req.ambient_temp,
             indoor_temp=results["t_in"]
         )
+
+        # Log action in onboard activity history
+        data = load_onboard_data()
+        data.setdefault("activity_log", []).insert(0, {
+            "username": req.username or "guest",
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "action": "Simulation Computed",
+            "details": f"{req.material_name} | {req.thickness_mm:.0f}mm | Tamb {req.ambient_temp}°C | Eff {results['thermal_efficiency']:.0f}%"
+        })
+        data["activity_log"] = data["activity_log"][:60]
+        save_onboard_data(data)
+
         return {
             "status": "success",
             "results": results,
@@ -332,19 +311,37 @@ def export_pdf(req: SolveRequest):
             shelter_height=req.shelter_height,
             relative_humidity=req.relative_humidity,
             wind_speed=req.wind_speed,
-            solar_radiation=req.solar_radiation
+            solar_radiation=req.solar_radiation,
+            occupancy_count=req.occupancy_count
         )
         pdf_bytes = generate_blueprint_pdf(results)
+        
+        # Log report generation in audit store
+        data = load_onboard_data()
+        report_record = {
+            "username": req.username or "engineer",
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "material": req.material_name,
+            "thickness": f"{req.thickness_mm:.0f}mm",
+            "efficiency": f"{results['thermal_efficiency']:.0f}%",
+            "heating_load": f"{results['heating_load_kwh_day']:.1f} kWh/day",
+            "diesel_liters": f"{results['diesel_liters_day']:.1f} L/day",
+            "status": results["status"]
+        }
+        data.setdefault("reports_generated", []).insert(0, report_record)
+        data["reports_generated"] = data["reports_generated"][:50]
+        save_onboard_data(data)
+
         return Response(
             content=pdf_bytes,
             media_type="application/pdf",
-            headers={"Content-Disposition": "attachment; filename=ThermoShelter_AI_Report.pdf"}
+            headers={"Content-Disposition": f"attachment; filename=ThermoShelter_Tactical_Blueprint.pdf"}
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/live-climate")
-def fetch_live_climate(lat: float = 28.6139, lon: float = 77.2090):
+def fetch_live_climate(lat: float = 34.2090, lon: float = 77.5750):
     try:
         params = urllib.parse.urlencode({
             "latitude": lat, "longitude": lon,
@@ -352,20 +349,26 @@ def fetch_live_climate(lat: float = 28.6139, lon: float = 77.2090):
             "timezone": "auto"
         })
         url = f"https://api.open-meteo.com/v1/forecast?{params}"
-        req = urllib.request.Request(url, headers={"User-Agent": "ThermoShelter-AI/2.0"})
+        req = urllib.request.Request(url, headers={"User-Agent": "ThermoShelter-AI/2.5"})
         with urllib.request.urlopen(req, timeout=8) as res:
             data = json.loads(res.read().decode("utf-8"))
         cur = data.get("current", {})
         return {
-            "temperature": float(cur.get("temperature_2m", 21.0)),
-            "humidity": float(cur.get("relative_humidity_2m", 50.0)),
-            "wind_speed": round(float(cur.get("wind_speed_10m", 1.8)) / 3.6, 2),
-            "solar_radiation": float(cur.get("shortwave_radiation", 150.0))
+            "temperature": float(cur.get("temperature_2m", -18.0)),
+            "humidity": float(cur.get("relative_humidity_2m", 45.0)),
+            "wind_speed": round(float(cur.get("wind_speed_10m", 12.0)) / 3.6, 2),
+            "solar_radiation": float(cur.get("shortwave_radiation", 180.0))
         }
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"Open-Meteo API unreachable: {str(e)}")
+        return {
+            "temperature": -25.0,
+            "humidity": 40.0,
+            "wind_speed": 10.5,
+            "solar_radiation": 160.0,
+            "fallback": True
+        }
 
-# Mount static folder for serving web frontend
+# Mount static files
 static_dir = os.path.join(os.path.dirname(__file__), "static")
 if not os.path.exists(static_dir):
     os.makedirs(static_dir, exist_ok=True)
@@ -374,6 +377,5 @@ app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", 8000))
-    print(f"Starting ThermoShelter AI Web Server on port {port}")
-    uvicorn.run("server:app", host="0.0.0.0", port=port, reload=False)
+    print("Starting ThermoShelter AI v2.5 at http://localhost:8000")
+    uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True)

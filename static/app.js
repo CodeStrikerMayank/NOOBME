@@ -1,24 +1,54 @@
-// ThermoShelter-AI Web Dashboard Client v2.0
+// ThermoShelter-AI Web Dashboard Client v2.5
 
 // State variables
+let currentUser = null;
 let currentParams = {
-  thickness_mm: 250,
-  ambient_temp: -10,
-  material_name: "High-Performance Composite",
-  target_temp: 21.0
+  thickness_mm: 350,
+  ambient_temp: -45,
+  material_name: "Aerogel",
+  target_temp: 21.0,
+  occupancy_count: 8,
+  username: "admin"
 };
 
-let reportHistory = [
-  { time: "Today 09:30", material: "High-Performance Composite", thickness: "250mm", eff: "90%", pmv: "+1.76" },
-  { time: "Yesterday 16:45", material: "Aerogel", thickness: "180mm", eff: "94%", pmv: "+0.15" },
-  { time: "Sep 18 11:20", material: "EPS Standard", thickness: "150mm", eff: "78%", pmv: "-0.40" }
-];
+const EXTREME_PRESETS = {
+  "Siachen Glacier Base": { temp: -45, thick: 350, mat: "Aerogel", occ: 8 },
+  "Dras Sector": { temp: -35, thick: 280, mat: "High-Performance Composite", occ: 6 },
+  "Leh Alpine Zone": { temp: -25, thick: 220, mat: "High-Performance Composite", occ: 6 },
+  "Arctic Expedition Station": { temp: -50, thick: 400, mat: "Aerogel", occ: 4 },
+  "Antarctic Research Pod": { temp: -60, thick: 450, mat: "Aerogel", occ: 8 }
+};
 
-// DOM elements
+// DOM elements - Auth & HUD
+const authScreen = document.getElementById("authScreen");
+const hudLoadingScreen = document.getElementById("hudLoadingScreen");
+const hudProgressBar = document.getElementById("hudProgressBar");
+const hudProgressPct = document.getElementById("hudProgressPct");
+const hudTelemetryText = document.getElementById("hudTelemetryText");
+
+const tabLoginBtn = document.getElementById("tabLoginBtn");
+const tabSignupBtn = document.getElementById("tabSignupBtn");
+const loginForm = document.getElementById("loginForm");
+const signupForm = document.getElementById("signupForm");
+const loginUsername = document.getElementById("loginUsername");
+const loginPassword = document.getElementById("loginPassword");
+const rememberMeCheck = document.getElementById("rememberMeCheck");
+const demoAdminBtn = document.getElementById("demoAdminBtn");
+const demoEngineerBtn = document.getElementById("demoEngineerBtn");
+
+const topProfileName = document.getElementById("topProfileName");
+const operatorRoleLabel = document.getElementById("operatorRoleLabel");
+const logoutBtn = document.getElementById("logoutBtn");
+const modalLogoutBtn = document.getElementById("modalLogoutBtn");
+
+// DOM elements - Solver & Presets
+const presetLocationSelect = document.getElementById("presetLocationSelect");
 const thicknessSlider = document.getElementById("thicknessSlider");
 const thicknessBadge = document.getElementById("thicknessBadge");
 const tempSlider = document.getElementById("tempSlider");
 const tempBadge = document.getElementById("tempBadge");
+const occupancySelect = document.getElementById("occupancySelect");
+const occupancyBadge = document.getElementById("occupancyBadge");
 const materialSelect = document.getElementById("materialSelect");
 const startSimBtn = document.getElementById("startSimBtn");
 const simProgressBar = document.getElementById("simProgressBar");
@@ -29,40 +59,27 @@ const liveWeatherBtn = document.getElementById("liveWeatherBtn");
 const efficiencyVal = document.getElementById("efficiencyVal");
 const bridgeCountVal = document.getElementById("bridgeCountVal");
 const heatingLoadVal = document.getElementById("heatingLoadVal");
+const dieselFuelVal = document.getElementById("dieselFuelVal");
 const comfortStatusText = document.getElementById("comfortStatusText");
 const pmvPpdText = document.getElementById("pmvPpdText");
 const comfortBadge = document.getElementById("comfortBadge");
 
-// Navigation buttons
+// Navigation & Modals
 const navDashboard = document.getElementById("navDashboard");
 const navSolver = document.getElementById("navSolver");
 const navHeatmaps = document.getElementById("navHeatmaps");
 const navReports = document.getElementById("navReports");
 const navAdmin = document.getElementById("navAdmin");
+const navAdminText = document.getElementById("navAdminText");
 const navAccount = document.getElementById("navAccount");
-const navAuth = document.getElementById("navAuth");
 const profileBtn = document.getElementById("profileBtn");
-const profileBtnName = document.getElementById("profileBtnName");
 const notifBtn = document.getElementById("notifBtn");
 const notifDropdown = document.getElementById("notifDropdown");
 
-// Onboard Auth & Action elements
-const headerAuthBtn = document.getElementById("headerAuthBtn");
-const headerAuthText = document.getElementById("headerAuthText");
-const headerAuthDot = document.getElementById("headerAuthDot");
-const saveDesignBtn = document.getElementById("saveDesignBtn");
-
-// Modals
 const adminModal = document.getElementById("adminModal");
 const reportsModal = document.getElementById("reportsModal");
 const accountModal = document.getElementById("accountModal");
-const authModal = document.getElementById("authModal");
-const healthModal = document.getElementById("healthModal");
-const healthStatusBtn = document.getElementById("healthStatusBtn");
 const toastBox = document.getElementById("toastBox");
-
-// Current Onboard User Session
-let currentUser = JSON.parse(localStorage.getItem("thermo_user") || "null");
 
 // ---------------- TOAST FEEDBACK ----------------
 function showToast(message, icon = "✓") {
@@ -77,10 +94,208 @@ function showToast(message, icon = "✓") {
   }, 2800);
 }
 
+// ---------------- AUTH & REMEMBER ME FLOW ----------------
+function checkRememberedLogin() {
+  const savedUser = localStorage.getItem("thermo_user");
+  const isRemembered = localStorage.getItem("thermo_remember_me") === "true";
+
+  if (savedUser && isRemembered) {
+    try {
+      currentUser = JSON.parse(savedUser);
+      applyUserSession(currentUser);
+      authScreen.classList.add("hidden");
+      initThreeScene();
+      runSolver(true);
+      return true;
+    } catch (e) {
+      localStorage.removeItem("thermo_user");
+    }
+  }
+  // Otherwise, leave auth screen visible
+  authScreen.classList.remove("hidden");
+  return false;
+}
+
+function applyUserSession(user) {
+  currentUser = user;
+  currentParams.username = user.username;
+  topProfileName.innerText = user.username;
+  operatorRoleLabel.innerText = `Operator: ${user.role}`;
+
+  document.getElementById("accountUsername").innerText = user.username;
+  document.getElementById("accountFullName").innerText = user.name;
+  document.getElementById("accountRolePill").innerText = user.role;
+
+  // If admin, highlight admin oversight
+  if (user.username === "admin") {
+    navAdminText.innerText = "DRDO Admin Oversight";
+  } else {
+    navAdminText.innerText = "Admin Oversight (Restricted)";
+  }
+}
+
+// Tab Switching
+tabLoginBtn.addEventListener("click", () => {
+  tabLoginBtn.classList.add("active");
+  tabSignupBtn.classList.remove("active");
+  loginForm.classList.remove("hidden");
+  signupForm.classList.add("hidden");
+});
+
+tabSignupBtn.addEventListener("click", () => {
+  tabSignupBtn.classList.add("active");
+  tabLoginBtn.classList.remove("active");
+  signupForm.classList.remove("hidden");
+  loginForm.classList.add("hidden");
+});
+
+// Quick Demo Access
+demoAdminBtn.addEventListener("click", () => {
+  loginUsername.value = "admin";
+  loginPassword.value = "12345";
+  rememberMeCheck.checked = true;
+  loginSubmit(new Event("submit"));
+});
+
+demoEngineerBtn.addEventListener("click", () => {
+  loginUsername.value = "engineer";
+  loginPassword.value = "engineer123";
+  rememberMeCheck.checked = true;
+  loginSubmit(new Event("submit"));
+});
+
+// Login Form Submit
+async function loginSubmit(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const username = loginUsername.value.trim();
+  const password = loginPassword.value.trim();
+  const remember = rememberMeCheck.checked;
+
+  try {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password, remember_me: remember })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || "Authentication failed.");
+    }
+
+    const data = await res.json();
+    const user = data.user;
+
+    if (remember) {
+      localStorage.setItem("thermo_user", JSON.stringify(user));
+      localStorage.setItem("thermo_remember_me", "true");
+    } else {
+      localStorage.removeItem("thermo_user");
+      localStorage.removeItem("thermo_remember_me");
+    }
+
+    applyUserSession(user);
+    authScreen.classList.add("hidden");
+
+    // Play HUD Loading Animation
+    playHudLoading(() => {
+      initThreeScene();
+      runSolver(false);
+      showToast(`Welcome, ${user.name} (${user.role})`);
+    });
+  } catch (err) {
+    alert("Authentication Error: " + err.message);
+  }
+}
+loginForm.addEventListener("submit", loginSubmit);
+
+// Signup Form Submit
+signupForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const name = document.getElementById("signupName").value.trim();
+  const username = document.getElementById("signupUsername").value.trim();
+  const password = document.getElementById("signupPassword").value.trim();
+  const role = document.getElementById("signupRole").value;
+
+  try {
+    const res = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, username, password, role })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || "Registration failed.");
+    }
+
+    const data = await res.json();
+    const user = data.user;
+
+    localStorage.setItem("thermo_user", JSON.stringify(user));
+    localStorage.setItem("thermo_remember_me", "true");
+
+    applyUserSession(user);
+    authScreen.classList.add("hidden");
+
+    playHudLoading(() => {
+      initThreeScene();
+      runSolver(false);
+      showToast(`Account Created & Verified for ${user.name}`);
+    });
+  } catch (err) {
+    alert("Registration Error: " + err.message);
+  }
+});
+
+// Logout
+function performLogout() {
+  localStorage.removeItem("thermo_user");
+  localStorage.removeItem("thermo_remember_me");
+  currentUser = null;
+  accountModal.classList.remove("open");
+  authScreen.classList.remove("hidden");
+  showToast("Workstation Locked. Operator Logged Out.", "🔒");
+}
+logoutBtn.addEventListener("click", performLogout);
+modalLogoutBtn.addEventListener("click", performLogout);
+
+// ---------------- HUD LOADING SEQUENCE ----------------
+function playHudLoading(onComplete) {
+  hudLoadingScreen.classList.add("show");
+  hudProgressBar.style.width = "0%";
+  hudProgressPct.innerText = "0%";
+
+  const steps = [
+    { pct: 25, text: "Authenticating operator cryptokey in onboard vault..." },
+    { pct: 55, text: "Calibrating 3D WebGL Three.js thermodynamic mesh..." },
+    { pct: 85, text: "Pulling sub-zero Himalayan meteorological telemetry..." },
+    { pct: 100, text: "Verification complete. Initializing ISO 7730 solver..." }
+  ];
+
+  let i = 0;
+  function nextStep() {
+    if (i < steps.length) {
+      hudProgressBar.style.width = `${steps[i].pct}%`;
+      hudProgressPct.innerText = `${steps[i].pct}%`;
+      hudTelemetryText.innerText = steps[i].text;
+      i++;
+      setTimeout(nextStep, 320);
+    } else {
+      setTimeout(() => {
+        hudLoadingScreen.classList.remove("show");
+        if (onComplete) onComplete();
+      }, 400);
+    }
+  }
+  nextStep();
+}
+
 // ---------------- THREE.JS 3D VISUALIZATION ----------------
 let scene, camera, renderer, controls, shelterGroup;
 
 function initThreeScene() {
+  if (scene) return; // Prevent duplicate initialization
   const container = document.getElementById("threeCanvasContainer");
   const width = container.clientWidth || 400;
   const height = container.clientHeight || 330;
@@ -102,7 +317,6 @@ function initThreeScene() {
   controls.dampingFactor = 0.08;
   controls.target.set(3, 1.2, 2.5);
 
-  // Lighting
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
   scene.add(ambientLight);
 
@@ -115,15 +329,12 @@ function initThreeScene() {
   fillLight.position.set(-10, 10, -10);
   scene.add(fillLight);
 
-  // 3D Floor Grid & Axis Lines
   buildGridAndAxes();
 
-  // Create architectural shelter model
   shelterGroup = new THREE.Group();
   scene.add(shelterGroup);
-  buildShelterGeometry(-10, 20);
+  buildShelterGeometry(-45, 20);
 
-  // Hook camera presets
   setupCameraButtons();
 
   window.addEventListener("resize", onWindowResize);
@@ -150,28 +361,29 @@ function buildGridAndAxes() {
 }
 
 function tempToColor(t) {
-  const norm = Math.max(0, Math.min(1, (t + 20) / 40));
+  // Normalize between -60°C to +22°C for extreme cold visibility
+  const norm = Math.max(0, Math.min(1, (t + 60) / 82));
   let r = 0, g = 0, b = 0;
   if (norm < 0.25) {
     const f = norm / 0.25;
-    r = 0.2 + 0.1 * f;
-    g = 0.3 + 0.5 * f;
-    b = 0.7 + 0.3 * f;
+    r = 0.15 + 0.1 * f;
+    g = 0.2 + 0.4 * f;
+    b = 0.65 + 0.35 * f;
   } else if (norm < 0.5) {
     const f = (norm - 0.25) / 0.25;
-    r = 0.3 + 0.5 * f;
-    g = 0.8 + 0.2 * f;
-    b = 1.0 - 0.7 * f;
+    r = 0.25 + 0.4 * f;
+    g = 0.6 + 0.4 * f;
+    b = 1.0 - 0.6 * f;
   } else if (norm < 0.75) {
     const f = (norm - 0.5) / 0.25;
-    r = 0.8 + 0.2 * f;
-    g = 1.0 - 0.4 * f;
-    b = 0.3 - 0.2 * f;
+    r = 0.75 + 0.25 * f;
+    g = 1.0 - 0.35 * f;
+    b = 0.4 - 0.3 * f;
   } else {
     const f = (norm - 0.75) / 0.25;
     r = 1.0;
-    g = 0.6 - 0.45 * f;
-    b = 0.1 - 0.05 * f;
+    g = 0.65 - 0.5 * f;
+    b = 0.1;
   }
   return new THREE.Color(r, g, b);
 }
@@ -278,13 +490,14 @@ async function runSolver(isSilent = false) {
     simStatusText.innerText = "Simulating...";
     startSimBtn.style.opacity = "0.85";
 
-    setTimeout(() => { simProgressBar.style.width = "45%"; }, 100);
-    setTimeout(() => { simProgressBar.style.width = "100%"; }, 250);
+    setTimeout(() => { simProgressBar.style.width = "45%"; }, 80);
+    setTimeout(() => { simProgressBar.style.width = "100%"; }, 220);
   }
 
   currentParams.thickness_mm = parseFloat(thicknessSlider.value);
   currentParams.ambient_temp = parseFloat(tempSlider.value);
   currentParams.material_name = materialSelect.value;
+  currentParams.occupancy_count = parseInt(occupancySelect.value);
 
   try {
     const res = await fetch("/api/solve", {
@@ -298,9 +511,10 @@ async function runSolver(isSilent = false) {
     const r = data.results;
 
     // Update Analytics Summary metrics
-    efficiencyVal.innerText = `${r.thermal_efficiency}%`;
+    efficiencyVal.innerText = `${r.thermal_efficiency.toFixed(0)}%`;
     bridgeCountVal.innerText = `${r.cold_bridge_count}`;
-    heatingLoadVal.innerText = `${r.heating_load_kwh_day} kWh/day`;
+    heatingLoadVal.innerText = `${r.heating_load_kwh_day.toFixed(1)} kWh/d`;
+    dieselFuelVal.innerText = `${r.diesel_liters_day.toFixed(1)} L/day`;
     comfortStatusText.innerText = r.status;
     pmvPpdText.innerText = `PMV: ${r.pmv > 0 ? '+' : ''}${r.pmv.toFixed(2)} | PPD: ${r.ppd.toFixed(1)}%`;
 
@@ -314,13 +528,12 @@ async function runSolver(isSilent = false) {
       comfortBadge.querySelector(".indicator-dot").style.background = "#f59e0b";
     }
 
-    // Update 3D visual shelter model colors
     buildShelterGeometry(r.t_out, r.t_in);
 
     if (!isSilent) {
       simStatusText.innerText = "0.38s (Complete)";
       startSimBtn.style.opacity = "1";
-      showToast(`Simulation Complete: ${r.thermal_efficiency}% Efficiency`);
+      showToast(`Simulation Complete: ${r.thermal_efficiency.toFixed(0)}% Efficiency`);
     }
   } catch (err) {
     console.error("Solver error:", err);
@@ -334,55 +547,62 @@ async function runSolver(isSilent = false) {
 
 // ---------------- EVENT LISTENERS ----------------
 thicknessSlider.addEventListener("input", (e) => {
-  if (!currentUser) {
-    showToast("Sign in or Sign up is compulsory to adjust parameters", "🔒");
-    openAuthModal("tabLogin");
-    return;
-  }
   thicknessBadge.innerText = e.target.value;
   runSolver(true);
 });
 
 tempSlider.addEventListener("input", (e) => {
-  if (!currentUser) {
-    showToast("Sign in or Sign up is compulsory to adjust parameters", "🔒");
-    openAuthModal("tabLogin");
-    return;
-  }
   const val = e.target.value;
   tempBadge.innerText = val > 0 ? `+${val}` : val;
+  if (parseFloat(val) <= -20) {
+    tempBadge.classList.add("extreme-cold");
+  } else {
+    tempBadge.classList.remove("extreme-cold");
+  }
   runSolver(true);
 });
 
+occupancySelect.addEventListener("change", () => {
+  occupancyBadge.innerText = `${occupancySelect.value} Persons`;
+  runSolver(true);
+  showToast(`Capacity Scaled to ${occupancySelect.value} Occupants`);
+});
+
 materialSelect.addEventListener("change", () => {
-  if (!currentUser) {
-    showToast("Sign in or Sign up is compulsory to select materials", "🔒");
-    openAuthModal("tabLogin");
-    return;
-  }
   runSolver(true);
   showToast(`Material updated: ${materialSelect.value}`);
 });
 
-startSimBtn.addEventListener("click", () => {
-  if (!currentUser) {
-    showToast("Sign in or Sign up is compulsory to run simulation", "🔒");
-    openAuthModal("tabLogin");
-    return;
+// Extreme Location Preset Picker
+presetLocationSelect.addEventListener("change", () => {
+  const choice = presetLocationSelect.value;
+  if (EXTREME_PRESETS[choice]) {
+    const p = EXTREME_PRESETS[choice];
+    tempSlider.value = p.temp;
+    tempBadge.innerText = p.temp;
+    tempBadge.classList.add("extreme-cold");
+
+    thicknessSlider.value = p.thick;
+    thicknessBadge.innerText = p.thick;
+
+    materialSelect.value = p.mat;
+    occupancySelect.value = p.occ;
+    occupancyBadge.innerText = `${p.occ} Persons`;
+
+    runSolver(false);
+    showToast(`Preset Applied: ${choice} (${p.temp}°C)`, "🏔️");
   }
+});
+
+startSimBtn.addEventListener("click", () => {
   runSolver(false);
 });
 
 // Download PDF Report
 downloadReportBtn.addEventListener("click", async () => {
-  if (!currentUser) {
-    showToast("Sign in or Sign up is compulsory to download blueprint reports", "🔒");
-    openAuthModal("tabLogin");
-    return;
-  }
   try {
     downloadReportBtn.style.opacity = "0.7";
-    showToast("Generating Blueprint PDF...", "⏳");
+    showToast("Generating Executive Blueprint PDF...", "⏳");
 
     const res = await fetch("/api/export-pdf", {
       method: "POST",
@@ -396,22 +616,13 @@ downloadReportBtn.addEventListener("click", async () => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `ThermoShelter_Blueprint_${currentParams.material_name.replace(/\s+/g, "_")}.pdf`;
+    a.download = `ThermoShelter_Tactical_Blueprint_${currentParams.material_name.replace(/\s+/g, "_")}.pdf`;
     document.body.appendChild(a);
     a.click();
     a.remove();
     window.URL.revokeObjectURL(url);
 
-    // Add to history
-    reportHistory.unshift({
-      time: "Just now",
-      material: currentParams.material_name,
-      thickness: `${currentParams.thickness_mm}mm`,
-      eff: efficiencyVal.innerText,
-      pmv: pmvPpdText.innerText.split('|')[0].trim()
-    });
-
-    showToast("PDF Blueprint Downloaded Successfully!");
+    showToast("Executive Blueprint Downloaded Successfully!");
   } catch (err) {
     showToast("Report download failed: " + err.message, "✕");
   } finally {
@@ -423,8 +634,8 @@ downloadReportBtn.addEventListener("click", async () => {
 liveWeatherBtn.addEventListener("click", async () => {
   try {
     liveWeatherBtn.innerText = "Syncing weather...";
-    showToast("Fetching Open-Meteo Alpine Climate...", "☁");
-    const res = await fetch("/api/live-climate?lat=28.6139&lon=77.2090");
+    showToast("Connecting Open-Meteo Alpine Telemetry...", "☁");
+    const res = await fetch("/api/live-climate?lat=34.2090&lon=77.5750");
     if (!res.ok) throw new Error("Weather API failed");
     const data = await res.json();
 
@@ -434,7 +645,7 @@ liveWeatherBtn.addEventListener("click", async () => {
     
     await runSolver(false);
     liveWeatherBtn.innerHTML = `<span>✓ Synced (${roundedTemp}°C)</span>`;
-    showToast(`Open-Meteo Synced: ${roundedTemp}°C`);
+    showToast(`Live Climate Synced: ${roundedTemp}°C`);
 
     setTimeout(() => {
       liveWeatherBtn.innerHTML = `
@@ -471,15 +682,16 @@ navHeatmaps.addEventListener("click", () => {
   showToast("3D Heatmaps Perspective Enabled");
 });
 
-navReports.addEventListener("click", () => {
+navReports.addEventListener("click", async () => {
   setActiveNav(navReports);
-  populateReportsModal();
+  await populateReportsModal();
   reportsModal.classList.add("open");
 });
 
+// ADMIN OVERSIGHT MODAL (FULL TELEMETRY AUDIT)
 navAdmin.addEventListener("click", async () => {
   setActiveNav(navAdmin);
-  await populateAdminMaterials();
+  await populateAdminAuditDashboard();
   adminModal.classList.add("open");
 });
 
@@ -492,109 +704,6 @@ profileBtn.addEventListener("click", () => {
   accountModal.classList.add("open");
 });
 
-// Onboard Auth Navigation & Button Click Handlers
-if (navAuth) {
-  navAuth.addEventListener("click", () => {
-    setActiveNav(navAuth);
-    openAuthModal(currentUser ? "tabDesigns" : "tabLogin");
-  });
-}
-
-if (headerAuthBtn) {
-  headerAuthBtn.addEventListener("click", () => {
-    openAuthModal(currentUser ? "tabDesigns" : "tabLogin");
-  });
-}
-
-if (saveDesignBtn) {
-  saveDesignBtn.addEventListener("click", () => {
-    if (!currentUser) {
-      showToast("Please log in to save blueprints to onboard store", "🔒");
-      openAuthModal("tabLogin");
-    } else {
-      openAuthModal("tabDesigns");
-      setTimeout(() => {
-        const inp = document.getElementById("designNameInput");
-        if (inp) inp.focus();
-      }, 200);
-    }
-  });
-}
-
-// Render Health & Keep-Awake Modal Listeners
-if (healthStatusBtn && healthModal) {
-  healthStatusBtn.addEventListener("click", () => {
-    healthModal.classList.add("open");
-    fetchHealthStatus();
-  });
-}
-
-const copyHealthUrlBtn = document.getElementById("copyHealthUrlBtn");
-if (copyHealthUrlBtn) {
-  copyHealthUrlBtn.addEventListener("click", () => {
-    const input = document.getElementById("healthCheckUrlInput");
-    if (input) {
-      navigator.clipboard.writeText(input.value);
-      showToast("Copied Health URL to clipboard!", "📋");
-      copyHealthUrlBtn.innerHTML = `<span>✓ Copied</span>`;
-      setTimeout(() => {
-        copyHealthUrlBtn.innerHTML = `
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-          </svg>
-          <span>Copy URL</span>
-        `;
-      }, 2500);
-    }
-  });
-}
-
-async function fetchHealthStatus() {
-  const statusEl = document.getElementById("healthModalStatus");
-  const uptimeEl = document.getElementById("healthModalUptime");
-  const pingsEl = document.getElementById("healthModalPings");
-  const envEl = document.getElementById("healthModalEnv");
-  const urlInput = document.getElementById("healthCheckUrlInput");
-
-  if (urlInput) {
-    urlInput.value = `${window.location.origin}/health`;
-  }
-
-  try {
-    const res = await fetch("/api/health");
-    if (!res.ok) throw new Error("Health check failed");
-    const data = await res.json();
-
-    if (statusEl) statusEl.innerText = data.status.toUpperCase();
-    if (uptimeEl) uptimeEl.innerText = data.uptime_formatted;
-    if (pingsEl) pingsEl.innerText = data.pings_received;
-    if (envEl) envEl.innerText = data.environment === "render" ? "Render Web Service" : "Local Fast-API";
-  } catch (err) {
-    if (statusEl) {
-      statusEl.innerText = "OFFLINE";
-      statusEl.className = "store-stat-val";
-      statusEl.style.color = "#dc2626";
-    }
-  }
-}
-
-// ---------------- 24/7 BROWSER KEEP-ALIVE PULSE ----------------
-// Pings /api/health every 5 minutes while this tab or a monitor tab is open
-// Render free tier sleeps after 15m; a 5m pulse prevents it from sleeping!
-setInterval(() => {
-  fetch("/api/health")
-    .then(res => res.json())
-    .then(data => {
-      const pulseText = document.getElementById("clientPulseText");
-      if (pulseText) {
-        const timeStr = new Date().toLocaleTimeString();
-        pulseText.innerText = `● Client Pulse: Sent at ${timeStr} (Next in 5m)`;
-      }
-    })
-    .catch(() => {});
-}, 300000); // 300,000 ms = 5 minutes
-
 notifBtn.addEventListener("click", (e) => {
   e.stopPropagation();
   notifDropdown.classList.toggle("show");
@@ -604,7 +713,6 @@ window.addEventListener("click", () => {
   notifDropdown.classList.remove("show");
 });
 
-// Close modals
 document.querySelectorAll(".modal-close, .modal-overlay").forEach(el => {
   el.addEventListener("click", (e) => {
     if (e.target === el || e.target.classList.contains("modal-close")) {
@@ -613,582 +721,105 @@ document.querySelectorAll(".modal-close, .modal-overlay").forEach(el => {
   });
 });
 
-async function populateAdminMaterials() {
-  const tbody = document.getElementById("adminMaterialsBody");
-  tbody.innerHTML = "<tr><td colspan='5'>Loading database...</td></tr>";
+async function populateAdminAuditDashboard() {
   try {
-    const res = await fetch("/api/materials");
+    const res = await fetch("/api/admin/audit");
+    if (!res.ok) throw new Error("Failed to fetch admin audit telemetry");
     const data = await res.json();
-    tbody.innerHTML = "";
-    Object.entries(data).forEach(([name, props]) => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td><strong>${name}</strong></td>
-        <td>${props.k.toFixed(3)}</td>
-        <td>${props.density} kg/m³</td>
-        <td>${props.cost_index.toFixed(2)}x</td>
-        <td><small>${props.source}</small></td>
-      `;
-      tbody.appendChild(tr);
-    });
-  } catch (err) {
-    tbody.innerHTML = `<tr><td colspan='5'>Error: ${err.message}</td></tr>`;
-  }
-}
 
-function populateReportsModal() {
-  const list = document.getElementById("reportHistoryList");
-  list.innerHTML = "";
-  reportHistory.forEach(item => {
-    const div = document.createElement("div");
-    div.className = "report-item";
-    div.innerHTML = `
-      <div class="report-info">
-        <strong>${item.material} (${item.thickness})</strong>
-        <span>Generated: ${item.time} | Efficiency: ${item.eff} | Comfort: ${item.pmv}</span>
-      </div>
-      <button class="btn-report-download" onclick="downloadReportBtn.click()">Download PDF</button>
-    `;
-    list.appendChild(div);
-  });
-}
+    // 4 KPI Cards
+    document.getElementById("adminTotalUsers").innerText = data.total_users;
+    document.getElementById("adminStorageSize").innerText = `${data.storage_size_kb} KB`;
+    document.getElementById("adminTotalLogins").innerText = data.login_history.length;
+    document.getElementById("adminTotalReports").innerText = data.reports_generated.length;
 
-// ---------------- ONBOARD AUTH & DATA STORE LOGIC ----------------
-
-function openAuthModal(defaultTabId = "tabLogin") {
-  if (authModal) {
-    authModal.classList.add("open");
-    switchAuthTab(defaultTabId);
-    fetchOnboardUsers();
-    if (currentUser) {
-      refreshUserProfile();
-    }
-  }
-}
-
-function switchAuthTab(targetPaneId) {
-  document.querySelectorAll(".auth-tab-btn").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.target === targetPaneId);
-  });
-  document.querySelectorAll(".auth-tab-pane").forEach(pane => {
-    pane.classList.toggle("active", pane.id === targetPaneId);
-  });
-
-  if (targetPaneId === "tabStore") {
-    fetchOnboardUsers();
-  }
-}
-
-// Tab Button Clicks
-document.querySelectorAll(".auth-tab-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const target = btn.dataset.target;
-    switchAuthTab(target);
-  });
-});
-
-// Switch links inside forms
-const switchToSignupBtn = document.getElementById("switchToSignupBtn");
-if (switchToSignupBtn) {
-  switchToSignupBtn.addEventListener("click", () => switchAuthTab("tabSignup"));
-}
-
-const switchToLoginBtn = document.getElementById("switchToLoginBtn");
-if (switchToLoginBtn) {
-  switchToLoginBtn.addEventListener("click", () => switchAuthTab("tabLogin"));
-}
-
-const emptyStateLoginBtn = document.getElementById("emptyStateLoginBtn");
-if (emptyStateLoginBtn) {
-  emptyStateLoginBtn.addEventListener("click", () => switchAuthTab("tabLogin"));
-}
-
-// 1-Click Demo Presets
-const presetAdminBtn = document.getElementById("presetAdminBtn");
-if (presetAdminBtn) {
-  presetAdminBtn.addEventListener("click", () => {
-    document.getElementById("loginUsername").value = "admin";
-    document.getElementById("loginPassword").value = "admin123";
-    showToast("Filled demo admin credentials", "🔑");
-  });
-}
-
-const presetEngineerBtn = document.getElementById("presetEngineerBtn");
-if (presetEngineerBtn) {
-  presetEngineerBtn.addEventListener("click", () => {
-    document.getElementById("loginUsername").value = "engineer";
-    document.getElementById("loginPassword").value = "engineer123";
-    showToast("Filled demo engineer credentials", "⚡");
-  });
-}
-
-// Login Submission
-const loginForm = document.getElementById("loginForm");
-if (loginForm) {
-  loginForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const u = document.getElementById("loginUsername").value.trim();
-    const p = document.getElementById("loginPassword").value;
-    const submitBtn = document.getElementById("loginSubmitBtn");
-
-    if (!u || !p) {
-      showToast("Please enter both username and password", "✕");
-      return;
-    }
-
-    try {
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = "<span>Authenticating...</span>";
-
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: u, password: p })
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.detail || "Authentication failed");
-      }
-
-      currentUser = data.user;
-      localStorage.setItem("thermo_user", JSON.stringify(currentUser));
-      updateAuthUI();
-      showToast(`Welcome back, ${currentUser.name}!`, "✓");
-      switchAuthTab("tabDesigns");
-      fetchOnboardUsers();
-    } catch (err) {
-      showToast(err.message, "✕");
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = `<span>Authenticate & Connect</span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>`;
-    }
-  });
-}
-
-// Sign Up Submission
-const signupForm = document.getElementById("signupForm");
-if (signupForm) {
-  signupForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const name = document.getElementById("signupName").value.trim();
-    const username = document.getElementById("signupUsername").value.trim();
-    const role = document.getElementById("signupRole").value;
-    const password = document.getElementById("signupPassword").value;
-    const submitBtn = document.getElementById("signupSubmitBtn");
-
-    if (!name || !username || !password) {
-      showToast("Please fill all required registration fields", "✕");
-      return;
-    }
-
-    try {
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = "<span>Registering in Onboard System...</span>";
-
-      const res = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name,
-          username: username,
-          role: role,
-          password: password
-        })
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.detail || "Sign up failed");
-      }
-
-      currentUser = data.user;
-      localStorage.setItem("thermo_user", JSON.stringify(currentUser));
-      updateAuthUI();
-      showToast(`User created & saved to onboard store!`, "✓");
-      switchAuthTab("tabDesigns");
-      fetchOnboardUsers();
-    } catch (err) {
-      showToast(err.message, "✕");
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = `<span>Register & Sign In</span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>`;
-    }
-  });
-}
-
-// Log Out Handler
-const logoutBtn = document.getElementById("logoutBtn");
-if (logoutBtn) {
-  logoutBtn.addEventListener("click", () => {
-    currentUser = null;
-    localStorage.removeItem("thermo_user");
-    updateAuthUI();
-    showToast("Logged out. Operating in Guest mode.", "ℹ");
-    switchAuthTab("tabLogin");
-  });
-}
-
-// Fetch and Render Onboard Data Store Users
-async function fetchOnboardUsers() {
-  const tbody = document.getElementById("storeTableBody");
-  const storeUserCountBadge = document.getElementById("storeUserCountBadge");
-  const storeStatTotalUsers = document.getElementById("storeStatTotalUsers");
-  const storeStatTotalDesigns = document.getElementById("storeStatTotalDesigns");
-
-  if (!tbody) return;
-
-  try {
-    const res = await fetch("/api/auth/users");
-    if (!res.ok) throw new Error("Failed to load onboard users");
-    const users = await res.json();
-
-    let totalDesigns = 0;
-    tbody.innerHTML = "";
-
-    users.forEach(u => {
-      totalDesigns += (u.designs_count || 0);
-      const isCurrent = currentUser && currentUser.username === u.username;
-      const initial = (u.name || u.username || "U").charAt(0).toUpperCase();
-
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>
-          <div class="user-badge-cell">
-            <div class="user-cell-avatar">${initial}</div>
-            <div>
-              <strong>${u.name}</strong>
-              ${isCurrent ? '<small style="color: #059669; font-weight:700; display:block;">(Active Session)</small>' : ''}
-            </div>
-          </div>
-        </td>
-        <td><code>${u.username}</code></td>
-        <td><span class="role-tag">${u.role}</span></td>
-        <td><strong>${u.designs_count || 0}</strong> saved</td>
-        <td><small style="color: var(--text-muted);">${u.created_at ? u.created_at.split("T")[0] : "System"}</small></td>
-        <td>
-          ${isCurrent 
-            ? '<span style="color:#059669; font-weight:700; font-size:0.75rem;">Connected</span>' 
-            : `<button class="btn-switch-user" onclick="quickFillAndSwitchUser('${u.username}')">Select User</button>`
-          }
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
-
-    if (storeStatTotalUsers) storeStatTotalUsers.innerText = users.length;
-    if (storeStatTotalDesigns) storeStatTotalDesigns.innerText = totalDesigns;
-    if (storeUserCountBadge) storeUserCountBadge.innerText = users.length;
-  } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="6" style="color: #dc2626;">Error loading onboard store: ${err.message}</td></tr>`;
-  }
-}
-
-// Quick switch user helper
-window.quickFillAndSwitchUser = function(username) {
-  document.getElementById("loginUsername").value = username;
-  document.getElementById("loginPassword").value = username === "admin" ? "admin123" : (username === "engineer" ? "engineer123" : "");
-  switchAuthTab("tabLogin");
-  showToast(`Selected user '${username}'. Enter password to connect.`, "👤");
-};
-
-// Refresh User Profile from Onboard Storage
-async function refreshUserProfile() {
-  if (!currentUser || !currentUser.username) return;
-  try {
-    const res = await fetch(`/api/auth/user/${encodeURIComponent(currentUser.username)}`);
-    if (!res.ok) return;
-    const data = await res.json();
-    currentUser = data.user;
-    localStorage.setItem("thermo_user", JSON.stringify(currentUser));
-    updateAuthUI();
-  } catch (err) {
-    console.warn("Could not sync user profile:", err);
-  }
-}
-
-// Save Active Model to Onboard Profile
-const saveCurrentModelBtn = document.getElementById("saveCurrentModelBtn");
-if (saveCurrentModelBtn) {
-  saveCurrentModelBtn.addEventListener("click", async () => {
-    if (!currentUser) {
-      showToast("Please log in first", "🔒");
-      switchAuthTab("tabLogin");
-      return;
-    }
-
-    const designNameInput = document.getElementById("designNameInput");
-    const customName = designNameInput.value.trim() || 
-      `${materialSelect.value} (${thicknessSlider.value}mm @ ${tempSlider.value}°C)`;
-
-    const params = {
-      thickness_mm: parseFloat(thicknessSlider.value),
-      ambient_temp: parseFloat(tempSlider.value),
-      material_name: materialSelect.value,
-      target_temp: currentParams.target_temp || 21.0
-    };
-
-    const results = {
-      efficiency: efficiencyVal ? efficiencyVal.innerText : "N/A",
-      heating_load: heatingLoadVal ? heatingLoadVal.innerText : "N/A",
-      comfort: comfortStatusText ? comfortStatusText.innerText : "N/A",
-      pmv: pmvPpdText ? pmvPpdText.innerText : "N/A"
-    };
-
-    try {
-      saveCurrentModelBtn.disabled = true;
-      saveCurrentModelBtn.innerText = "Saving to Onboard Store...";
-
-      const res = await fetch("/api/auth/save-design", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: currentUser.username,
-          design_name: customName,
-          parameters: params,
-          results: results
-        })
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Failed to save design");
-
-      if (!currentUser.designs) currentUser.designs = [];
-      currentUser.designs.unshift(data.design);
-      localStorage.setItem("thermo_user", JSON.stringify(currentUser));
-
-      designNameInput.value = "";
-      updateAuthUI();
-      fetchOnboardUsers();
-      showToast(`Saved '${customName}' to onboard storage!`, "✓");
-    } catch (err) {
-      showToast(err.message, "✕");
-    } finally {
-      saveCurrentModelBtn.disabled = false;
-      saveCurrentModelBtn.innerHTML = `
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-          <polyline points="17 21 17 13 7 13 7 21"/>
-          <polyline points="7 3 7 8 15 8"/>
-        </svg>
-        <span>Save Active Model</span>
-      `;
-    }
-  });
-}
-
-// Load a Saved Blueprint into Solver
-window.loadSavedBlueprint = function(designIndex) {
-  if (!currentUser || !currentUser.designs || !currentUser.designs[designIndex]) return;
-  const d = currentUser.designs[designIndex];
-  const p = d.parameters || {};
-
-  if (p.thickness_mm) {
-    thicknessSlider.value = p.thickness_mm;
-    thicknessBadge.innerText = p.thickness_mm;
-  }
-  if (p.ambient_temp !== undefined) {
-    tempSlider.value = p.ambient_temp;
-    tempBadge.innerText = p.ambient_temp > 0 ? `+${p.ambient_temp}` : p.ambient_temp;
-  }
-  if (p.material_name) {
-    materialSelect.value = p.material_name;
-  }
-
-  runSolver(false);
-  authModal.classList.remove("open");
-  showToast(`Loaded '${d.name}' into 3D Solver`, "📐");
-};
-
-// Delete a Saved Blueprint from Onboard Store
-window.deleteSavedBlueprint = async function(designId) {
-  if (!currentUser || !currentUser.username) return;
-  if (!confirm("Are you sure you want to remove this blueprint from the onboard system?")) return;
-
-  try {
-    const res = await fetch(`/api/auth/user/${encodeURIComponent(currentUser.username)}/design/${encodeURIComponent(designId)}`, {
-      method: "DELETE"
-    });
-    if (!res.ok) throw new Error("Failed to delete design");
-
-    currentUser.designs = (currentUser.designs || []).filter(d => d.id !== designId);
-    localStorage.setItem("thermo_user", JSON.stringify(currentUser));
-    updateAuthUI();
-    fetchOnboardUsers();
-    showToast("Blueprint removed from onboard store", "🗑");
-  } catch (err) {
-    showToast(err.message, "✕");
-  }
-};
-
-// Refresh Refresh button
-const refreshStoreBtn = document.getElementById("refreshStoreBtn");
-if (refreshStoreBtn) {
-  refreshStoreBtn.addEventListener("click", () => {
-    fetchOnboardUsers();
-    showToast("Onboard store synchronized", "✓");
-  });
-}
-
-// Quick Preset Helper for 1-Click Login
-async function loginWithPreset(username, password) {
-  try {
-    showToast(`Connecting as ${username}...`, "🔑");
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || "Authentication failed");
-
-    currentUser = data.user;
-    localStorage.setItem("thermo_user", JSON.stringify(currentUser));
-    updateAuthUI();
-    showToast(`Operator connected: ${currentUser.name}! System Unlocked.`, "✓");
-    runSolver(false);
-    fetchOnboardUsers();
-    if (authModal) authModal.classList.remove("open");
-  } catch (err) {
-    showToast(err.message, "✕");
-  }
-}
-
-// Wire Compulsory Lock Overlay Buttons
-const lockDemoAdminBtn = document.getElementById("lockDemoAdminBtn");
-if (lockDemoAdminBtn) {
-  lockDemoAdminBtn.addEventListener("click", () => loginWithPreset("admin", "admin123"));
-}
-
-const lockDemoEngineerBtn = document.getElementById("lockDemoEngineerBtn");
-if (lockDemoEngineerBtn) {
-  lockDemoEngineerBtn.addEventListener("click", () => loginWithPreset("engineer", "engineer123"));
-}
-
-const lockLoginBtn = document.getElementById("lockLoginBtn");
-if (lockLoginBtn) {
-  lockLoginBtn.addEventListener("click", () => openAuthModal("tabLogin"));
-}
-
-const lockSignupBtn = document.getElementById("lockSignupBtn");
-if (lockSignupBtn) {
-  lockSignupBtn.addEventListener("click", () => openAuthModal("tabSignup"));
-}
-
-// Update Active User UI across Dashboard
-function updateAuthUI() {
-  const headerAuthText = document.getElementById("headerAuthText");
-  const headerAuthDot = document.getElementById("headerAuthDot");
-  const profileBtnName = document.getElementById("profileBtnName");
-  const userDesignsCountBadge = document.getElementById("userDesignsCountBadge");
-  const designsLoggedOutView = document.getElementById("designsLoggedOutView");
-  const designsLoggedInView = document.getElementById("designsLoggedInView");
-  const bannerAvatar = document.getElementById("bannerAvatar");
-  const bannerUserName = document.getElementById("bannerUserName");
-  const bannerUserRole = document.getElementById("bannerUserRole");
-  const bannerUserMeta = document.getElementById("bannerUserMeta");
-  const blueprintCountTag = document.getElementById("blueprintCountTag");
-  const blueprintsGrid = document.getElementById("blueprintsGrid");
-  const dashboardLockOverlay = document.getElementById("dashboardLockOverlay");
-
-  if (currentUser) {
-    // Unlocked Dashboard State
-    if (dashboardLockOverlay) dashboardLockOverlay.style.display = "none";
-
-    const initial = (currentUser.name || currentUser.username || "U").charAt(0).toUpperCase();
-    if (headerAuthText) headerAuthText.innerText = currentUser.name.split(" ")[0];
-    if (headerAuthDot) {
-      headerAuthDot.className = "auth-status-dot online";
-      headerAuthDot.title = "Connected to Onboard System";
-    }
-    if (profileBtnName) profileBtnName.innerText = currentUser.name.split(" ")[0];
-
-    if (designsLoggedOutView) designsLoggedOutView.style.display = "none";
-    if (designsLoggedInView) designsLoggedInView.style.display = "block";
-
-    if (bannerAvatar) bannerAvatar.innerText = initial;
-    if (bannerUserName) bannerUserName.innerText = currentUser.name;
-    if (bannerUserRole) bannerUserRole.innerText = currentUser.role || "Operator";
-    if (bannerUserMeta) bannerUserMeta.innerText = `User ID: ${currentUser.username} | Target: data/onboard_users.json`;
-
-    const designs = currentUser.designs || [];
-    if (userDesignsCountBadge) userDesignsCountBadge.innerText = designs.length;
-    if (blueprintCountTag) blueprintCountTag.innerText = `${designs.length} saved in onboard store`;
-
-    if (blueprintsGrid) {
-      if (designs.length === 0) {
-        blueprintsGrid.innerHTML = `
-          <div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: var(--text-muted); background: var(--pill-bg); border-radius: 8px;">
-            No custom blueprints saved yet. Use the "Save Active Model" button above to preserve your current 3D shelter configuration.
-          </div>
+    // Login History
+    const loginTbody = document.getElementById("adminLoginsTbody");
+    loginTbody.innerHTML = "";
+    if (data.login_history.length === 0) {
+      loginTbody.innerHTML = "<tr><td colspan='5'>No login sessions recorded yet.</td></tr>";
+    } else {
+      data.login_history.forEach(log => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><strong>${log.username}</strong></td>
+          <td><small>${log.timestamp}</small></td>
+          <td>${log.role}</td>
+          <td>${log.client}</td>
+          <td><span style="color:${log.remember_me ? '#10b981' : '#64748b'}">${log.remember_me ? '✓ Enabled' : 'No'}</span></td>
         `;
-      } else {
-        blueprintsGrid.innerHTML = "";
-        designs.forEach((d, idx) => {
-          const p = d.parameters || {};
-          const r = d.results || {};
-          const card = document.createElement("div");
-          card.className = "blueprint-card";
-          card.innerHTML = `
-            <div class="blueprint-header">
-              <div>
-                <strong>${d.name}</strong>
-                <span class="blueprint-time">${d.saved_at || "Recent"}</span>
-              </div>
-              <span class="role-tag">${p.material_name || "Composite"}</span>
-            </div>
-            <div class="blueprint-stats">
-              <div class="blueprint-stat-item">
-                <span>Thickness:</span> <strong>${p.thickness_mm || 250}mm</strong>
-              </div>
-              <div class="blueprint-stat-item">
-                <span>Ambient:</span> <strong>${p.ambient_temp !== undefined ? p.ambient_temp : -10}°C</strong>
-              </div>
-              <div class="blueprint-stat-item">
-                <span>Efficiency:</span> <strong>${r.efficiency || "N/A"}</strong>
-              </div>
-              <div class="blueprint-stat-item">
-                <span>Heating Load:</span> <strong>${r.heating_load || "N/A"}</strong>
-              </div>
-            </div>
-            <div class="blueprint-actions">
-              <button class="btn-load-blueprint" onclick="loadSavedBlueprint(${idx})">Load into Solver</button>
-              <button class="btn-delete-blueprint" onclick="deleteSavedBlueprint('${d.id}')" title="Delete Blueprint">🗑</button>
-            </div>
-          `;
-          blueprintsGrid.appendChild(card);
-        });
-      }
+        loginTbody.appendChild(tr);
+      });
     }
-  } else {
-    // Locked Dashboard State (Sign In / Sign Up Compulsory)
-    if (dashboardLockOverlay) dashboardLockOverlay.style.display = "flex";
 
-    if (headerAuthText) headerAuthText.innerText = "Login / Sign Up";
-    if (headerAuthDot) {
-      headerAuthDot.className = "auth-status-dot offline";
-      headerAuthDot.title = "Authentication Compulsory";
+    // Activity Table
+    const actTbody = document.getElementById("adminActivityTbody");
+    actTbody.innerHTML = "";
+    if (data.activity_log.length === 0) {
+      actTbody.innerHTML = "<tr><td colspan='4'>No simulation events recorded yet.</td></tr>";
+    } else {
+      data.activity_log.forEach(act => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><strong>${act.username}</strong></td>
+          <td><small>${act.timestamp}</small></td>
+          <td><span class="comfort-badge-pill" style="font-size:0.65rem;padding:2px 6px;">${act.action}</span></td>
+          <td><small>${act.details}</small></td>
+        `;
+        actTbody.appendChild(tr);
+      });
     }
-    if (profileBtnName) profileBtnName.innerText = "Profile";
 
-    if (designsLoggedOutView) designsLoggedOutView.style.display = "flex";
-    if (designsLoggedInView) designsLoggedInView.style.display = "none";
-    if (userDesignsCountBadge) userDesignsCountBadge.innerText = "0";
+    // Users Table
+    const userTbody = document.getElementById("adminUsersTbody");
+    userTbody.innerHTML = "";
+    data.users.forEach(u => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><strong>${u.username}</strong></td>
+        <td>${u.name}</td>
+        <td>${u.role}</td>
+        <td><small>${u.created_at.split('T')[0]}</small></td>
+        <td>${u.designs_count} Designs</td>
+      `;
+      userTbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error("Admin audit fetch error:", err);
   }
 }
 
-// Initialize on page load
-// The main dashboard is the page, but authentication is compulsory to use it.
-window.addEventListener("DOMContentLoaded", () => {
-  initThreeScene();
-  updateAuthUI();
-  fetchOnboardUsers();
-
-  if (currentUser) {
-    runSolver(true);
-  } else {
-    // Show compulsory auth modal and lock overlay
-    openAuthModal("tabLogin");
-    showToast("Operator sign in or sign up is compulsory to use the system", "🔒");
+async function populateReportsModal() {
+  const list = document.getElementById("reportHistoryList");
+  list.innerHTML = "<div>Fetching blueprint archive...</div>";
+  try {
+    const res = await fetch("/api/admin/audit");
+    const data = await res.json();
+    list.innerHTML = "";
+    const reports = data.reports_generated || [];
+    if (reports.length === 0) {
+      list.innerHTML = "<p>No blueprint reports exported yet. Click 'DOWNLOAD EXECUTIVE PDF' on the dashboard to generate your first document.</p>";
+      return;
+    }
+    reports.forEach(item => {
+      const div = document.createElement("div");
+      div.className = "report-item";
+      div.innerHTML = `
+        <div class="report-info">
+          <strong>${item.material} (${item.thickness}) &bull; ${item.efficiency} Eff</strong>
+          <span>Generated: ${item.timestamp} &bull; Load: ${item.heating_load} &bull; Fuel: ${item.diesel_liters}</span>
+        </div>
+        <button class="btn-report-download" onclick="downloadReportBtn.click()">Re-download</button>
+      `;
+      list.appendChild(div);
+    });
+  } catch (e) {
+    list.innerHTML = "<p>Error loading reports archive.</p>";
   }
+}
+
+// ---------------- INITIALIZATION ----------------
+window.addEventListener("DOMContentLoaded", () => {
+  // Check if user has an active "Remember Me" session
+  checkRememberedLogin();
 });

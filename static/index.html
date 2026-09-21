@@ -3,17 +3,141 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ThermoShelter-AI — 3D Thermal Model Solver</title>
+  <title>ThermoShelter-AI — Defense & Alpine Thermal Platform</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <!-- Three.js and OrbitControls for Interactive 3D Shelter Visualization -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
-  <div class="app-layout">
+  <!-- ================= SCREEN 1: INITIAL LOGIN / SIGNUP GATE ================= -->
+  <div class="auth-screen-overlay" id="authScreen">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <div class="auth-logo-box">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="#d95a1e" stroke="#f28c50"/>
+            <polyline points="9 22 9 12 15 12 15 22" stroke="#ffffff"/>
+          </svg>
+        </div>
+        <div class="auth-brand-text">
+          <h2>ThermoShelter-AI</h2>
+          <span>Defense & Alpine Enclosure Platform</span>
+        </div>
+      </div>
+
+      <!-- Tab Switcher -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabLoginBtn">Sign In</button>
+        <button class="auth-tab" id="tabSignupBtn">New Operator</button>
+      </div>
+
+      <!-- Login Form -->
+      <form class="auth-form" id="loginForm">
+        <div class="form-group">
+          <label>Operator ID / Username</label>
+          <input type="text" id="loginUsername" placeholder="e.g. admin or engineer" required autocomplete="username">
+        </div>
+
+        <div class="form-group">
+          <label>Security Password</label>
+          <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+
+        <!-- Remember Me Checkbox -->
+        <div class="remember-row">
+          <label class="remember-label">
+            <input type="checkbox" id="rememberMeCheck">
+            <span class="custom-checkbox"></span>
+            <span>Keep me logged in (Skip login next time)</span>
+          </label>
+        </div>
+
+        <button type="submit" class="btn-auth-submit" id="loginSubmitBtn">
+          <span>Authenticate & Launch Platform</span>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </button>
+
+        <!-- Quick 1-Click Demo Buttons -->
+        <div class="quick-demo-section">
+          <span>One-Click Verification Access:</span>
+          <div class="demo-buttons-row">
+            <button type="button" class="btn-demo" id="demoAdminBtn">
+              <strong>Admin Access</strong>
+              <small>admin / 12345</small>
+            </button>
+            <button type="button" class="btn-demo" id="demoEngineerBtn">
+              <strong>Lead Engineer</strong>
+              <small>engineer / engineer123</small>
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Signup Form -->
+      <form class="auth-form hidden" id="signupForm">
+        <div class="form-group">
+          <label>Full Operator Name</label>
+          <input type="text" id="signupName" placeholder="Dr. A. K. Sharma" required>
+        </div>
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="signupUsername" placeholder="unique username" required>
+        </div>
+        <div class="form-group">
+          <label>Security Password</label>
+          <input type="password" id="signupPassword" placeholder="min 4 characters" required>
+        </div>
+        <div class="form-group">
+          <label>Assigned Operational Role</label>
+          <select id="signupRole" class="auth-select">
+            <option value="Alpine Field Engineer">Alpine Field Engineer</option>
+            <option value="Thermal Systems Analyst">Thermal Systems Analyst</option>
+            <option value="DRDO Research Officer">DRDO Research Officer</option>
+            <option value="Disaster Relief Architect">Disaster Relief Architect</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn-auth-submit">
+          <span>Register & Enter Workstation</span>
+        </button>
+      </form>
+
+      <div class="auth-footer-tag">
+        <span>Protected by Local Onboard Storage SHA-256 Vault</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= SCREEN 2: HUD LOADING SEQUENCE ================= -->
+  <div class="hud-loading-screen" id="hudLoadingScreen">
+    <div class="hud-center-box">
+      <div class="hud-spinner-wrap">
+        <div class="hud-outer-ring"></div>
+        <div class="hud-inner-core">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#ea580c" stroke-width="2">
+            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+          </svg>
+        </div>
+      </div>
+      <h3 class="hud-title">INITIALIZING DEFENSE WORKSTATION</h3>
+      <p class="hud-telemetry" id="hudTelemetryText">Authenticating operator credentials...</p>
+      
+      <div class="hud-progress-bar-bg">
+        <div class="hud-progress-bar-fill" id="hudProgressBar"></div>
+      </div>
+      <div class="hud-pct" id="hudProgressPct">0%</div>
+    </div>
+  </div>
+
+  <!-- ================= SCREEN 3: MAIN DASHBOARD CANVAS ================= -->
+  <div class="app-layout" id="mainDashboard">
     <!-- Left Navigation Sidebar -->
     <aside class="sidebar">
       <div class="brand">
@@ -71,15 +195,7 @@
             <circle cx="12" cy="12" r="3"/>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
           </svg>
-          <span>Admin Panels</span>
-        </button>
-
-        <button class="nav-item" id="navAuth" data-view="auth">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            <path d="M9 12l2 2 4-4"/>
-          </svg>
-          <span>Onboard Auth & Data</span>
+          <span id="navAdminText">Admin Oversight</span>
         </button>
 
         <button class="nav-item" id="navAccount" data-view="account">
@@ -92,10 +208,10 @@
       </nav>
 
       <div class="sidebar-footer">
-        <button class="system-status-indicator" id="healthStatusBtn" title="Click to view Render Service Health & 24/7 Keep-Awake Monitor">
+        <div class="system-status-indicator">
           <span class="status-pulse"></span>
-          <span id="healthStatusLabel">Render Engine Online</span>
-        </button>
+          <span>FastAPI Engine Online</span>
+        </div>
       </div>
     </aside>
 
@@ -107,26 +223,28 @@
           <span class="active-crumb" id="headerTitle">3D Thermal Model Solver</span>
         </div>
         <div class="header-actions">
-          <!-- Quick Auth / Active User Badge -->
-          <button class="auth-header-btn" id="headerAuthBtn" title="Onboard Auth & Login Panel">
-            <span class="auth-btn-icon">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
-            </span>
-            <span id="headerAuthText">Login / Sign Up</span>
-            <span class="auth-status-dot offline" id="headerAuthDot"></span>
-          </button>
+          <div class="operator-badge-pill" id="operatorBadge">
+            <span class="operator-dot"></span>
+            <span id="operatorRoleLabel">Operator: Lead Engineer</span>
+          </div>
 
           <button class="profile-pill" id="profileBtn" title="User Profile">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
               <circle cx="12" cy="7" r="4"/>
             </svg>
-            <span id="profileBtnName">Profile</span>
-            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Avatar" class="avatar-img" id="profileAvatarImg">
+            <span id="topProfileName">admin</span>
+            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Avatar" class="avatar-img">
           </button>
+
+          <button class="btn-logout-small" id="logoutBtn" title="Log Out / Lock Workstation">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </button>
+
           <button class="notif-btn" id="notifBtn" title="Notifications">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -137,89 +255,43 @@
 
           <!-- Notifications Popover -->
           <div class="notif-dropdown" id="notifDropdown">
-            <div class="notif-header">Notifications</div>
+            <div class="notif-header">Tactical Alerts & Logs</div>
             <div class="notif-list">
               <div class="notif-item">
-                <strong>Model Solver Ready</strong>
-                <p>Equilibrium state computed at 90% thermal efficiency.</p>
-                <small>Just now</small>
+                <strong>Sub-Zero Alpine Boundary Active</strong>
+                <p>Extreme cold presets enabled down to -60°C.</p>
+                <small>Active</small>
               </div>
               <div class="notif-item">
-                <strong>Boundary Verified</strong>
-                <p>Sub-zero alpine thermal comfort constraints satisfied.</p>
-                <small>2m ago</small>
+                <strong>Onboard Storage Audit Synced</strong>
+                <p>Telemetry recorded in local data/onboard_users.json.</p>
+                <small>Synced</small>
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      <!-- Compulsory Auth Barrier Overlay -->
-      <div class="dashboard-lock-overlay" id="dashboardLockOverlay" style="display: none;">
-        <div class="lock-card">
-          <div class="lock-shield-icon">
-            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
-          </div>
-          <span class="lock-badge">AUTHENTICATION COMPULSORY</span>
-          <h2 class="lock-heading">Operator Sign In / Sign Up Required</h2>
-          <p class="lock-desc">Access to the 3D Thermal Model Solver, thermodynamic equations, and blueprint generation is restricted to authenticated operators in the onboard system.</p>
-
-          <!-- 1-Click Demo Quick Presets in Lock Screen -->
-          <div class="lock-demo-box">
-            <span class="lock-demo-label">Quick 1-Click Operator Connect:</span>
-            <div class="lock-demo-chips">
-              <button type="button" class="lock-demo-chip" id="lockDemoAdminBtn" title="Instant connect as DRDO Admin">
-                <span class="lock-chip-icon">🛡</span>
-                <div class="lock-chip-text">
-                  <strong>1-Click Admin</strong>
-                  <small>admin / admin123</small>
-                </div>
-              </button>
-              <button type="button" class="lock-demo-chip" id="lockDemoEngineerBtn" title="Instant connect as Lead Thermal Engineer">
-                <span class="lock-chip-icon">⚡</span>
-                <div class="lock-chip-text">
-                  <strong>1-Click Engineer</strong>
-                  <small>engineer / engineer123</small>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          <div class="lock-actions">
-            <button type="button" class="btn-lock-action btn-lock-login" id="lockLoginBtn">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-                <polyline points="10 17 15 12 10 7"/>
-                <line x1="15" y1="12" x2="3" y2="12"/>
-              </svg>
-              <span>Log In to Onboard System</span>
-            </button>
-            <button type="button" class="btn-lock-action btn-lock-signup" id="lockSignupBtn">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                <circle cx="8.5" cy="7" r="4"/>
-                <line x1="20" y1="8" x2="20" y2="14"/>
-                <line x1="23" y1="11" x2="17" y2="11"/>
-              </svg>
-              <span>Register New Operator</span>
-            </button>
-          </div>
-
-          <div class="lock-footer-info">
-            <span class="storage-dot"></span>
-            <span>Local Onboard Offline Database: <code>data/onboard_users.json</code></span>
-          </div>
-        </div>
-      </div>
-
       <!-- Dashboard Workspace Body -->
       <div class="workspace-grid">
         <!-- Center Left: 3D Thermal Model Solver Card -->
         <section class="solver-card">
-          <h2 class="card-main-title">3D THERMAL MODEL SOLVER</h2>
+          <div class="card-header-row">
+            <h2 class="card-main-title">3D THERMAL MODEL SOLVER</h2>
+
+            <!-- Extreme Location Preset Bar -->
+            <div class="preset-picker-wrap">
+              <label class="preset-label">EXTREME COLD PRESET:</label>
+              <select id="presetLocationSelect" class="preset-select">
+                <option value="Custom">Custom Parameters</option>
+                <option value="Siachen Glacier Base" selected>Siachen Glacier Base (-45°C)</option>
+                <option value="Dras Sector">Dras Sector (-35°C)</option>
+                <option value="Leh Alpine Zone">Leh Alpine Zone (-25°C)</option>
+                <option value="Arctic Expedition Station">Arctic Expedition (-50°C)</option>
+                <option value="Antarctic Research Pod">Antarctic Research Pod (-60°C)</option>
+              </select>
+            </div>
+          </div>
 
           <div class="solver-layout">
             <!-- Col 1: Parameters -->
@@ -228,44 +300,60 @@
               <div class="param-group">
                 <div class="param-header">
                   <label class="param-label">INSULATION THICKNESS (mm)</label>
-                  <span class="param-badge" id="thicknessBadge">250</span>
+                  <span class="param-badge" id="thicknessBadge">350</span>
                 </div>
                 <div class="slider-wrapper">
-                  <input type="range" id="thicknessSlider" min="10" max="500" value="250" step="5">
+                  <input type="range" id="thicknessSlider" min="20" max="600" value="350" step="5">
                   <div class="slider-scale">
-                    <span>0</span>
-                    <span>500</span>
+                    <span>20</span>
+                    <span>300</span>
+                    <span>600</span>
                   </div>
                 </div>
               </div>
 
-              <!-- Environment Temperature Slider -->
+              <!-- Environment Temperature Slider (Now down to -60°C) -->
               <div class="param-group">
                 <div class="param-header">
                   <label class="param-label">ENVIRONMENT TEMPERATURE (°C)</label>
-                  <span class="param-badge" id="tempBadge">-10</span>
+                  <span class="param-badge extreme-cold" id="tempBadge">-45</span>
                 </div>
                 <div class="slider-wrapper">
-                  <input type="range" id="tempSlider" min="-30" max="40" value="-10" step="1">
+                  <input type="range" id="tempSlider" min="-60" max="40" value="-45" step="1">
                   <div class="slider-scale">
+                    <span>-60°C</span>
                     <span>-30</span>
                     <span>0</span>
-                    <span>20</span>
-                    <span>40</span>
+                    <span>+40°C</span>
                   </div>
                 </div>
+              </div>
+
+              <!-- Shelter Occupancy Capacity -->
+              <div class="param-group">
+                <div class="param-header">
+                  <label class="param-label">SHELTER OCCUPANCY CAPACITY</label>
+                  <span class="param-badge" id="occupancyBadge">8 Persons</span>
+                </div>
+                <select id="occupancySelect" class="material-pill-select">
+                  <option value="4">4-Person Tactical Recon Pod</option>
+                  <option value="8" selected>8-Person Alpine Squad Unit</option>
+                  <option value="16">16-Person High-Altitude Barracks</option>
+                  <option value="32">32-Person Field Medical Shelter</option>
+                  <option value="50">50-Person High-Capacity Base</option>
+                </select>
               </div>
 
               <!-- Shelter Material Selector -->
               <div class="param-group">
-                <label class="param-label">SHELTER MATERIAL</label>
+                <label class="param-label">SHELTER CORE MATERIAL</label>
                 <div class="custom-select-wrapper">
                   <select id="materialSelect" class="material-pill-select">
-                    <option value="High-Performance Composite" selected>High-Performance Composite</option>
-                    <option value="Aerogel">Aerogel Super-insulator</option>
-                    <option value="XPS">XPS High-Density Foam</option>
-                    <option value="EPS">EPS Expanded Polystyrene</option>
-                    <option value="Mineral Wool">Mineral Wool Stonecore</option>
+                    <option value="Aerogel" selected>Aerogel Super-insulator (k=0.015)</option>
+                    <option value="High-Performance Composite">High-Performance Composite (k=0.022)</option>
+                    <option value="XPS">XPS High-Density Foam (k=0.034)</option>
+                    <option value="EPS">EPS Expanded Polystyrene (k=0.040)</option>
+                    <option value="Mineral Wool">Mineral Wool Stonecore (k=0.040)</option>
                   </select>
                 </div>
               </div>
@@ -284,7 +372,7 @@
             <!-- Col 2: 3D Visualization -->
             <div class="solver-col viz-col">
               <div class="viz-header">
-                <h3 class="viz-title">3D VISUALIZATION OF MATPLOTLIB PLOT</h3>
+                <h3 class="viz-title">3D THERMAL FINITE-ELEMENT PERSPECTIVE</h3>
               </div>
 
               <div class="viewport-3d-container">
@@ -300,15 +388,13 @@
 
                 <!-- Temperature Colormap Legend on the right -->
                 <div class="thermal-colorbar">
-                  <div class="colorbar-label top">20</div>
-                  <div class="colorbar-label">15</div>
+                  <div class="colorbar-label top">22</div>
                   <div class="colorbar-label">10</div>
-                  <div class="colorbar-label">5</div>
                   <div class="colorbar-label">0</div>
-                  <div class="colorbar-label">-5</div>
-                  <div class="colorbar-label">-10</div>
                   <div class="colorbar-label">-15</div>
-                  <div class="colorbar-label bottom">-20</div>
+                  <div class="colorbar-label">-30</div>
+                  <div class="colorbar-label">-45</div>
+                  <div class="colorbar-label bottom">-60</div>
                   <div class="colorbar-gradient"></div>
                   <div class="colorbar-title">Temperature (°C)</div>
                 </div>
@@ -329,7 +415,7 @@
                     <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
                       <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
                     </svg>
-                    <span>GOOGLE AI OPTIMIZED</span>
+                    <span>ISO 7730 OPTIMIZED</span>
                   </div>
                 </div>
                 <div class="hero-glow"></div>
@@ -357,21 +443,29 @@
             <div class="metric-item">
               <span class="metric-label">OVERALL THERMAL EFFICIENCY</span>
               <div class="metric-value-box">
-                <span class="metric-number" id="efficiencyVal">78%</span>
+                <span class="metric-number" id="efficiencyVal">94%</span>
               </div>
             </div>
 
             <div class="metric-item">
               <span class="metric-label">CRITICAL COLD BRIDGE COUNT</span>
               <div class="metric-value-box">
-                <span class="metric-number" id="bridgeCountVal">3</span>
+                <span class="metric-number" id="bridgeCountVal">2</span>
               </div>
             </div>
 
             <div class="metric-item">
-              <span class="metric-label">ESTIMATED HEATING LOAD</span>
+              <span class="metric-label">ESTIMATED HEATING DEMAND</span>
               <div class="metric-value-box">
-                <span class="metric-number" id="heatingLoadVal">12 kWh/day</span>
+                <span class="metric-number" id="heatingLoadVal">1.2 kWh/day</span>
+              </div>
+            </div>
+
+            <!-- Alpine Fuel Consumption Metric -->
+            <div class="metric-item">
+              <span class="metric-label">DIESEL FUEL LOGISTICS (ESTIMATED)</span>
+              <div class="metric-value-box highlight-fuel">
+                <span class="metric-number" id="dieselFuelVal">0.2 L/day</span>
               </div>
             </div>
 
@@ -381,13 +475,13 @@
                 <span class="indicator-dot"></span>
                 <span id="comfortStatusText">OPTIMAL COMFORT</span>
               </div>
-              <div class="comfort-subtext" id="pmvPpdText">PMV: -0.12 | PPD: 5.3%</div>
+              <div class="comfort-subtext" id="pmvPpdText">PMV: 0.00 | PPD: 5.0%</div>
             </div>
           </div>
 
           <!-- Report Generation Card -->
           <div class="metrics-card report-card">
-            <h3 class="side-card-title">REPORT GENERATION</h3>
+            <h3 class="side-card-title">OFFICIAL SPECIFICATION</h3>
             <button class="btn-download-report" id="downloadReportBtn">
               <div class="btn-icon-wrap">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
@@ -397,7 +491,7 @@
                   <polyline points="9 15 12 18 15 15"/>
                 </svg>
               </div>
-              <span class="btn-text">DOWNLOAD<br>PDF REPORT</span>
+              <span class="btn-text">DOWNLOAD<br>EXECUTIVE PDF</span>
               <div class="btn-arrow">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
                   <line x1="12" y1="5" x2="12" y2="19"/>
@@ -406,67 +500,105 @@
               </div>
             </button>
           </div>
-
-          <!-- Onboard Storage Save Card -->
-          <div class="metrics-card onboard-card">
-            <h3 class="side-card-title">ONBOARD DATA STORE</h3>
-            <button class="btn-save-blueprint" id="saveDesignBtn" title="Save current simulation to Onboard System">
-              <div class="btn-icon-wrap">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                  <polyline points="17 21 17 13 7 13 7 21"/>
-                  <polyline points="7 3 7 8 15 8"/>
-                </svg>
-              </div>
-              <span class="btn-text">SAVE BLUEPRINT<br>TO ONBOARD STORE</span>
-              <div class="btn-arrow">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <polyline points="9 18 15 12 9 6"/>
-                </svg>
-              </div>
-            </button>
-            <div class="onboard-storage-hint">
-              <span class="storage-dot"></span>
-              <span>Target: data/onboard_users.json</span>
-            </div>
-          </div>
         </aside>
       </div>
     </main>
   </div>
 
-  <!-- Modal: Admin Panels -->
+  <!-- ================= MODAL: COMPREHENSIVE ADMIN AUDIT DASHBOARD ================= -->
   <div class="modal-overlay" id="adminModal">
-    <div class="modal-container">
+    <div class="modal-container admin-audit-modal">
       <div class="modal-header">
-        <h3>Admin Oversight & Material Bases</h3>
+        <div class="admin-title-badge">
+          <span class="admin-badge-icon">🛡️</span>
+          <div>
+            <h3>DRDO & Administrative Master Audit</h3>
+            <span class="admin-sub">Full telemetry from onboard storage (data/onboard_users.json)</span>
+          </div>
+        </div>
         <button class="modal-close" data-close="adminModal">&times;</button>
       </div>
-      <div class="modal-body">
-        <p class="modal-desc">Configure DRDO boundary limits and audit material properties used in the thermodynamic simulation.</p>
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Material</th>
-                <th>k (W/mK)</th>
-                <th>Density</th>
-                <th>Cost Index</th>
-                <th>Source</th>
-              </tr>
-            </thead>
-            <tbody id="adminMaterialsBody">
-              <!-- Populated by JS -->
-            </tbody>
-          </table>
+
+      <div class="modal-body admin-scrollable-body">
+        <!-- 4 Stat Badges -->
+        <div class="admin-kpi-grid">
+          <div class="admin-kpi-card">
+            <span class="kpi-label">REGISTERED OPERATORS</span>
+            <span class="kpi-val" id="adminTotalUsers">2</span>
+          </div>
+          <div class="admin-kpi-card">
+            <span class="kpi-label">STORAGE VAULT SIZE</span>
+            <span class="kpi-val" id="adminStorageSize">1.2 KB</span>
+          </div>
+          <div class="admin-kpi-card">
+            <span class="kpi-label">TOTAL SESSIONS LOGGED</span>
+            <span class="kpi-val" id="adminTotalLogins">14</span>
+          </div>
+          <div class="admin-kpi-card">
+            <span class="kpi-label">BLUEPRINTS EXPORTED</span>
+            <span class="kpi-val" id="adminTotalReports">8</span>
+          </div>
         </div>
-        <div class="boundary-box">
-          <h4>Configured Review Boundaries</h4>
-          <div class="boundary-grid">
-            <div class="boundary-item"><span>Min Design Temp:</span> <strong>-50.0 °C</strong></div>
-            <div class="boundary-item"><span>Max Design Temp:</span> <strong>+60.0 °C</strong></div>
-            <div class="boundary-item"><span>PMV Alert Threshold:</span> <strong>± 2.5</strong></div>
-            <div class="boundary-item"><span>Status:</span> <strong style="color: #059669">Within Safe Enclosure</strong></div>
+
+        <!-- Section 1: Login History -->
+        <div class="admin-section">
+          <h4>Operator Login History & Timestamps</h4>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Exact Login Time</th>
+                  <th>Assigned Role</th>
+                  <th>Client Node</th>
+                  <th>Remember Me</th>
+                </tr>
+              </thead>
+              <tbody id="adminLoginsTbody">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Section 2: Recent Activity & Simulation Runs -->
+        <div class="admin-section">
+          <h4>Recent Thermal Solver Invocations</h4>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Operator</th>
+                  <th>Timestamp</th>
+                  <th>Action</th>
+                  <th>Configuration Details</th>
+                </tr>
+              </thead>
+              <tbody id="adminActivityTbody">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Section 3: Registered Operators List -->
+        <div class="admin-section">
+          <h4>Authorized Operator Accounts</h4>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Full Name</th>
+                  <th>Role</th>
+                  <th>Created At</th>
+                  <th>Designs Stored</th>
+                </tr>
+              </thead>
+              <tbody id="adminUsersTbody">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -477,7 +609,7 @@
   <div class="modal-overlay" id="reportsModal">
     <div class="modal-container">
       <div class="modal-header">
-        <h3>Generated Blueprint Reports</h3>
+        <h3>Generated Blueprint Archive</h3>
         <button class="modal-close" data-close="reportsModal">&times;</button>
       </div>
       <div class="modal-body">
@@ -493,448 +625,28 @@
   <div class="modal-overlay" id="accountModal">
     <div class="modal-container account-modal-card">
       <div class="modal-header">
-        <h3>User Profile & Workstation</h3>
+        <h3>Operator Profile & Workstation Node</h3>
         <button class="modal-close" data-close="accountModal">&times;</button>
       </div>
       <div class="modal-body">
         <div class="profile-info-row">
           <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80" class="profile-large-avatar" alt="Avatar">
           <div class="profile-details">
-            <h4>Lead Thermal Systems Engineer</h4>
-            <span class="profile-badge-pill">Admin Access Verified</span>
-            <p>Station: High-Altitude Alpine Test Facility</p>
+            <h4 id="accountFullName">DRDO Oversight & Admin</h4>
+            <span class="profile-badge-pill" id="accountRolePill">Admin Access Verified</span>
+            <p>Assigned Station: High-Altitude Tactical Alpine Base</p>
           </div>
         </div>
         <div class="profile-meta-grid">
-          <div class="meta-item"><span>Username:</span> <strong>engineer@thermoshelter.ai</strong></div>
-          <div class="meta-item"><span>Connected Engine:</span> <strong>FastAPI v2.0 (Port 8000)</strong></div>
-          <div class="meta-item"><span>Active Simulation:</span> <strong>Fanger PMV/PPD Steady-State</strong></div>
-          <div class="meta-item"><span>Coordinates:</span> <strong>28.6139° N, 77.2090° E</strong></div>
+          <div class="meta-item"><span>Operator ID:</span> <strong id="accountUsername">admin</strong></div>
+          <div class="meta-item"><span>Engine Connection:</span> <strong>FastAPI v2.5 (High-Capacity Node)</strong></div>
+          <div class="meta-item"><span>Sub-Zero Range:</span> <strong>Down to -60.0 °C (Active)</strong></div>
+          <div class="meta-item"><span>Vault Status:</span> <strong>data/onboard_users.json (Locked)</strong></div>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: Render Health & Keep-Awake Monitor -->
-  <div class="modal-overlay" id="healthModal">
-    <div class="modal-container health-modal-card">
-      <div class="modal-header">
-        <div class="auth-modal-title-box">
-          <div class="auth-modal-icon health-icon-pulse">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-            </svg>
-          </div>
-          <div>
-            <h3>Render Service Health & 24/7 Keep-Awake Monitor</h3>
-            <span class="auth-modal-subtitle">Continuous Uptime & Sleep Prevention for Render Free Tier</span>
-          </div>
-        </div>
-        <button class="modal-close" data-close="healthModal">&times;</button>
-      </div>
-      <div class="modal-body health-modal-body">
-        <!-- Live Metrics Grid -->
-        <div class="store-stats-grid">
-          <div class="store-stat-card">
-            <span class="store-stat-label">SERVICE STATUS</span>
-            <strong class="store-stat-val status-green" id="healthModalStatus">HEALTHY</strong>
-          </div>
-          <div class="store-stat-card">
-            <span class="store-stat-label">SYSTEM UPTIME</span>
-            <strong class="store-stat-val" id="healthModalUptime">0h 0m 0s</strong>
-          </div>
-          <div class="store-stat-card">
-            <span class="store-stat-label">HEALTH PINGS RECEIVED</span>
-            <strong class="store-stat-val" id="healthModalPings">0</strong>
-          </div>
-          <div class="store-stat-card">
-            <span class="store-stat-label">ENVIRONMENT</span>
-            <strong class="store-stat-val" id="healthModalEnv">Render / Local</strong>
-          </div>
-        </div>
-
-        <!-- Render 15-Minute Inactivity Prevention Alert -->
-        <div class="render-awake-banner">
-          <div class="render-banner-icon">⚡</div>
-          <div class="render-banner-content">
-            <h4>Render 15-Minute Sleep Prevention</h4>
-            <p>Render Free Tier web services go to sleep after <strong>15 minutes of inactivity</strong>. Use our dedicated <code>/health</code> endpoint with a free external monitor (e.g. UptimeRobot or cron-job.org) to ping every <strong>10 minutes</strong> and keep your service awake 24/7 with zero cold starts.</p>
-          </div>
-        </div>
-
-        <!-- Copyable Endpoint URL Box -->
-        <div class="health-url-box">
-          <label class="form-label">YOUR HEALTH CHECK & MONITORING URL</label>
-          <div class="url-input-group">
-            <input type="text" id="healthCheckUrlInput" class="auth-input mono-input" readonly value="http://localhost:8000/health">
-            <button type="button" class="btn-copy-url" id="copyHealthUrlBtn">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-              </svg>
-              <span>Copy URL</span>
-            </button>
-          </div>
-          <small class="save-hint">Returns HTTP 200 OK with lightweight JSON health payload.</small>
-        </div>
-
-        <!-- 3 Monitoring Options -->
-        <div class="monitor-methods-grid">
-          <div class="monitor-method-card active-method">
-            <div class="method-header">
-              <span class="method-num">1</span>
-              <strong>UptimeRobot (Recommended)</strong>
-              <span class="method-badge">100% Free 24/7</span>
-            </div>
-            <p>1. Go to <a href="https://uptimerobot.com" target="_blank" rel="noopener" style="color:var(--accent-orange); font-weight:700;">UptimeRobot.com</a> (Free).</p>
-            <p>2. Add New Monitor → Type: <strong>HTTP(s)</strong>.</p>
-            <p>3. Paste your <strong>/health</strong> URL above.</p>
-            <p>4. Set Monitoring Interval to <strong>10 minutes</strong>.</p>
-            <small>✓ Keeps your Render service awake 24 hours a day.</small>
-          </div>
-
-          <div class="monitor-method-card">
-            <div class="method-header">
-              <span class="method-num">2</span>
-              <strong>cron-job.org (Alternative)</strong>
-              <span class="method-badge">Free Cron</span>
-            </div>
-            <p>1. Go to <a href="https://cron-job.org" target="_blank" rel="noopener" style="color:var(--accent-orange); font-weight:700;">cron-job.org</a>.</p>
-            <p>2. Create a Cron Job pointing to your <strong>/health</strong> URL.</p>
-            <p>3. Schedule: <strong>Every 10 minutes</strong>.</p>
-            <small>✓ Zero maintenance ping that runs in the cloud.</small>
-          </div>
-
-          <div class="monitor-method-card">
-            <div class="method-header">
-              <span class="method-num">3</span>
-              <strong>Active Tab Pulse (Built-in)</strong>
-              <span class="method-badge live">ACTIVE NOW</span>
-            </div>
-            <p>This browser client automatically sends a keep-alive pulse to <code>/api/health</code> every <strong>5 minutes</strong> while this dashboard or another monitor tab is open.</p>
-            <small id="clientPulseText">● Client Pulse: Active (Next ping in 5m)</small>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: Onboard Auth & Data Store Panel -->
-  <div class="modal-overlay" id="authModal">
-    <div class="modal-container auth-modal-card">
-      <div class="modal-header">
-        <div class="auth-modal-title-box">
-          <div class="auth-modal-icon">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
-          </div>
-          <div>
-            <h3>Onboard System Authentication & Data Store</h3>
-            <span class="auth-modal-subtitle">Autonomous Local Storage Engine (<code>data/onboard_users.json</code>)</span>
-          </div>
-        </div>
-        <button class="modal-close" data-close="authModal">&times;</button>
-      </div>
-
-      <!-- Auth Navigation Tabs -->
-      <div class="auth-tabs-nav">
-        <button class="auth-tab-btn active" id="tabBtnLogin" data-target="tabLogin">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-            <polyline points="10 17 15 12 10 7"/>
-            <line x1="15" y1="12" x2="3" y2="12"/>
-          </svg>
-          <span>Log In</span>
-        </button>
-        <button class="auth-tab-btn" id="tabBtnSignup" data-target="tabSignup">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-            <circle cx="8.5" cy="7" r="4"/>
-            <line x1="20" y1="8" x2="20" y2="14"/>
-            <line x1="23" y1="11" x2="17" y2="11"/>
-          </svg>
-          <span>Sign Up</span>
-        </button>
-        <button class="auth-tab-btn" id="tabBtnStore" data-target="tabStore">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
-            <ellipse cx="12" cy="5" rx="9" ry="3"/>
-            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
-            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
-          </svg>
-          <span>Onboard Data Store</span>
-          <span class="auth-badge-count" id="storeUserCountBadge">2</span>
-        </button>
-        <button class="auth-tab-btn" id="tabBtnDesigns" data-target="tabDesigns">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-            <polyline points="17 21 17 13 7 13 7 21"/>
-            <polyline points="7 3 7 8 15 8"/>
-          </svg>
-          <span>Saved Blueprints</span>
-          <span class="auth-badge-count" id="userDesignsCountBadge">0</span>
-        </button>
-      </div>
-
-      <div class="modal-body auth-modal-body">
-        <!-- TAB 1: LOG IN -->
-        <div class="auth-tab-pane active" id="tabLogin">
-          <div class="auth-intro-box">
-            <h4>Operator Authentication</h4>
-            <p>Connect with your field engineering profile. Credentials verified against local onboard store.</p>
-          </div>
-
-          <!-- Quick 1-Click Demo Accounts -->
-          <div class="quick-preset-box">
-            <span class="preset-label">Quick 1-Click Demo Credentials:</span>
-            <div class="preset-chips">
-              <button type="button" class="preset-chip" id="presetAdminBtn" title="Auto-fill admin credentials">
-                <span class="chip-avatar">🛡</span>
-                <div class="chip-text">
-                  <strong>admin</strong>
-                  <small>DRDO Admin (admin123)</small>
-                </div>
-              </button>
-              <button type="button" class="preset-chip" id="presetEngineerBtn" title="Auto-fill engineer credentials">
-                <span class="chip-avatar">⚡</span>
-                <div class="chip-text">
-                  <strong>engineer</strong>
-                  <small>Lead Engineer (engineer123)</small>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          <form id="loginForm" class="auth-form" onsubmit="return false;">
-            <div class="form-group">
-              <label class="form-label" for="loginUsername">Username / Operator ID</label>
-              <div class="input-with-icon">
-                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-                <input type="text" id="loginUsername" class="auth-input" placeholder="e.g. admin or engineer" required autocomplete="username">
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="loginPassword">Password</label>
-              <div class="input-with-icon">
-                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-                <input type="password" id="loginPassword" class="auth-input" placeholder="Enter password" required autocomplete="current-password">
-              </div>
-            </div>
-
-            <div class="form-actions">
-              <button type="submit" class="btn-auth-primary" id="loginSubmitBtn">
-                <span>Authenticate & Connect</span>
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <polyline points="9 18 15 12 9 6"/>
-                </svg>
-              </button>
-            </div>
-
-            <div class="auth-switch-prompt">
-              <span>Need a new onboard operator profile?</span>
-              <button type="button" class="btn-link" id="switchToSignupBtn">Register New User</button>
-            </div>
-          </form>
-        </div>
-
-        <!-- TAB 2: SIGN UP -->
-        <div class="auth-tab-pane" id="tabSignup">
-          <div class="auth-intro-box">
-            <h4>Register New Onboard Operator</h4>
-            <p>Creates a new credential record written directly into <code>data/onboard_users.json</code>.</p>
-          </div>
-
-          <form id="signupForm" class="auth-form" onsubmit="return false;">
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="signupName">Full Name / Operator Designation</label>
-                <div class="input-with-icon">
-                  <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
-                  </svg>
-                  <input type="text" id="signupName" class="auth-input" placeholder="e.g. Captain Negi" required>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label" for="signupUsername">Username</label>
-                <div class="input-with-icon">
-                  <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 16v-4"/>
-                    <path d="M12 8h.01"/>
-                  </svg>
-                  <input type="text" id="signupUsername" class="auth-input" placeholder="e.g. captain_negi" required autocomplete="username">
-                </div>
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="signupRole">System Role</label>
-                <div class="input-with-icon">
-                  <select id="signupRole" class="auth-input auth-select">
-                    <option value="Thermal Systems Engineer" selected>Thermal Systems Engineer</option>
-                    <option value="DRDO Field Specialist">DRDO Field Specialist</option>
-                    <option value="High-Altitude Shelter Architect">High-Altitude Shelter Architect</option>
-                    <option value="Extreme Climate Analyst">Extreme Climate Analyst</option>
-                    <option value="Alpine Operations Commander">Alpine Operations Commander</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label" for="signupPassword">Password (Min 4 chars)</label>
-                <div class="input-with-icon">
-                  <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                  </svg>
-                  <input type="password" id="signupPassword" class="auth-input" placeholder="Set password" minlength="4" required autocomplete="new-password">
-                </div>
-              </div>
-            </div>
-
-            <div class="onboard-storage-notice">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              <span>Record will be written permanently to the onboard offline store. Available across all field sessions without internet access.</span>
-            </div>
-
-            <div class="form-actions">
-              <button type="submit" class="btn-auth-primary btn-signup-action" id="signupSubmitBtn">
-                <span>Register & Sign In</span>
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <polyline points="9 18 15 12 9 6"/>
-                </svg>
-              </button>
-            </div>
-
-            <div class="auth-switch-prompt">
-              <span>Already registered in the onboard system?</span>
-              <button type="button" class="btn-link" id="switchToLoginBtn">Log In Instead</button>
-            </div>
-          </form>
-        </div>
-
-        <!-- TAB 3: ONBOARD SYSTEM DATA STORE -->
-        <div class="auth-tab-pane" id="tabStore">
-          <div class="store-stats-grid">
-            <div class="store-stat-card">
-              <span class="store-stat-label">REGISTERED OPERATORS</span>
-              <strong class="store-stat-val" id="storeStatTotalUsers">-</strong>
-            </div>
-            <div class="store-stat-card">
-              <span class="store-stat-label">SAVED BLUEPRINTS</span>
-              <strong class="store-stat-val" id="storeStatTotalDesigns">-</strong>
-            </div>
-            <div class="store-stat-card">
-              <span class="store-stat-label">STORAGE ENGINE</span>
-              <strong class="store-stat-val status-green">LOCAL JSON DB</strong>
-            </div>
-            <div class="store-stat-card">
-              <span class="store-stat-label">PERSISTENCE TARGET</span>
-              <strong class="store-stat-val mono-path">data/onboard_users.json</strong>
-            </div>
-          </div>
-
-          <div class="store-table-header-row">
-            <h4>Onboard System Accounts Registry</h4>
-            <button class="btn-refresh-store" id="refreshStoreBtn" title="Refresh data store">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="23 4 23 10 17 10"/>
-                <polyline points="1 20 1 14 7 14"/>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-              </svg>
-              <span>Sync Store</span>
-            </button>
-          </div>
-
-          <div class="store-table-wrap">
-            <table class="store-table">
-              <thead>
-                <tr>
-                  <th>Operator</th>
-                  <th>Username</th>
-                  <th>Assigned Role</th>
-                  <th>Saved Blueprints</th>
-                  <th>Registered</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="storeTableBody">
-                <!-- Populated by JS -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- TAB 4: SAVED BLUEPRINTS & ACTIVE SESSION -->
-        <div class="auth-tab-pane" id="tabDesigns">
-          <div id="designsLoggedOutView" class="auth-empty-state">
-            <div class="empty-icon">🔒</div>
-            <h4>Log In Required</h4>
-            <p>Please log in or sign up to access and save your custom thermal shelter configurations to the onboard storage.</p>
-            <button type="button" class="btn-auth-primary" id="emptyStateLoginBtn">Go to Log In</button>
-          </div>
-
-          <div id="designsLoggedInView" style="display: none;">
-            <!-- Active User Bar -->
-            <div class="active-user-banner">
-              <div class="banner-avatar" id="bannerAvatar">US</div>
-              <div class="banner-info">
-                <h4 id="bannerUserName">Lead Thermal Engineer</h4>
-                <span class="banner-role-pill" id="bannerUserRole">Lead Thermal Systems Engineer</span>
-                <small id="bannerUserMeta">Username: engineer | Storage: data/onboard_users.json</small>
-              </div>
-              <button class="btn-logout" id="logoutBtn" title="Log out from session">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                  <polyline points="16 17 21 12 16 7"/>
-                  <line x1="21" y1="12" x2="9" y2="12"/>
-                </svg>
-                <span>Log Out</span>
-              </button>
-            </div>
-
-            <!-- Quick Save Current Solver State -->
-            <div class="save-current-box">
-              <div class="save-input-row">
-                <input type="text" id="designNameInput" class="auth-input" placeholder="Blueprint Name (e.g. Alpine 250mm Composite Unit)">
-                <button type="button" class="btn-auth-primary" id="saveCurrentModelBtn">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                    <polyline points="17 21 17 13 7 13 7 21"/>
-                    <polyline points="7 3 7 8 15 8"/>
-                  </svg>
-                  <span>Save Active Model</span>
-                </button>
-              </div>
-              <small class="save-hint">Saves current thickness, ambient temp, material, efficiency, and comfort to your onboard profile.</small>
-            </div>
-
-            <!-- List of Saved Blueprints -->
-            <div class="saved-blueprints-header">
-              <h4>Stored Thermal Blueprints</h4>
-              <span class="blueprint-count" id="blueprintCountTag">0 saved</span>
-            </div>
-
-            <div class="blueprints-grid" id="blueprintsGrid">
-              <!-- Populated by JS -->
-            </div>
-          </div>
+        <div style="margin-top: 16px;">
+          <button class="btn-subtle" id="modalLogoutBtn" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.4);">
+            Sign Out of Workstation
+          </button>
         </div>
       </div>
     </div>
