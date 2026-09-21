@@ -2,12 +2,12 @@
   "users": {
     "admin": {
       "username": "admin",
-      "name": "System Administrator",
-      "password_hash": "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5",
-      "role": "DRDO Oversight & Admin",
+      "name": "DRDO Oversight & Admin",
+      "password_hash": "d437b572b1619f82b40e478df9e58ed26a9edc81a8fb10146ee8308d90910904",
+      "role": "Chief Administrator",
       "created_at": "2026-09-20T10:02:10.737829",
       "designs": [],
-      "password_hash_alt": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9"
+      "password_hash_alt": "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5"
     },
     "engineer": {
       "username": "engineer",
@@ -27,6 +27,38 @@
     }
   },
   "login_history": [
+    {
+      "username": "engineer",
+      "timestamp": "2026-09-21 19:49:14",
+      "role": "Lead Thermal Systems Engineer",
+      "status": "Success",
+      "remember_me": true,
+      "client": "127.0.0.1"
+    },
+    {
+      "username": "admin",
+      "timestamp": "2026-09-21 19:39:45",
+      "role": "Chief Administrator",
+      "status": "Success",
+      "remember_me": true,
+      "client": "127.0.0.1"
+    },
+    {
+      "username": "admin",
+      "timestamp": "2026-09-21 19:37:21",
+      "role": "Chief Administrator",
+      "status": "Success",
+      "remember_me": true,
+      "client": "127.0.0.1"
+    },
+    {
+      "username": "admin",
+      "timestamp": "2026-09-21 19:35:08",
+      "role": "Chief Administrator",
+      "status": "Success",
+      "remember_me": false,
+      "client": "127.0.0.1"
+    },
     {
       "username": "admin",
       "timestamp": "2026-09-21 19:10:17",
@@ -53,6 +85,24 @@
     }
   ],
   "activity_log": [
+    {
+      "username": "engineer",
+      "timestamp": "2026-09-21 19:49:16",
+      "action": "Simulation Computed",
+      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+    },
+    {
+      "username": "admin",
+      "timestamp": "2026-09-21 19:39:48",
+      "action": "Simulation Computed",
+      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+    },
+    {
+      "username": "admin",
+      "timestamp": "2026-09-21 19:37:24",
+      "action": "Simulation Computed",
+      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+    },
     {
       "username": "admin",
       "timestamp": "2026-09-21 19:15:21",

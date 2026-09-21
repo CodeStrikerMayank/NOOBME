@@ -119,19 +119,33 @@ function checkRememberedLogin() {
 function applyUserSession(user) {
   currentUser = user;
   currentParams.username = user.username;
-  topProfileName.innerText = user.username;
-  operatorRoleLabel.innerText = `Operator: ${user.role}`;
+  const isAdmin = (user.username === "admin");
 
+  const operatorBadge = document.getElementById("operatorBadge");
+  const adminPowerStressBtn = document.getElementById("adminPowerStressBtn");
+
+  if (isAdmin) {
+    topProfileName.innerText = "admin (Chief Admin)";
+    operatorRoleLabel.innerHTML = `<span style="color:#fdba74; font-weight:800;">⚡ CHIEF ADMINISTRATOR [ROOT ACCESS]</span>`;
+    if (operatorBadge) operatorBadge.classList.add("admin-badge-glow");
+    if (navAdmin) {
+      navAdmin.style.display = "flex";
+      navAdminText.innerText = "DRDO Admin Oversight";
+    }
+    if (adminPowerStressBtn) adminPowerStressBtn.classList.remove("hidden");
+  } else {
+    topProfileName.innerText = user.username;
+    operatorRoleLabel.innerText = `Operator: ${user.role || 'Field Engineer'}`;
+    if (operatorBadge) operatorBadge.classList.remove("admin-badge-glow");
+    // Normal users cannot access admin oversight - completely hide it from menu
+    if (navAdmin) navAdmin.style.display = "none";
+    if (adminPowerStressBtn) adminPowerStressBtn.classList.add("hidden");
+  }
+
+  // Update account modal baseline labels
   document.getElementById("accountUsername").innerText = user.username;
   document.getElementById("accountFullName").innerText = user.name;
   document.getElementById("accountRolePill").innerText = user.role;
-
-  // If admin, highlight admin oversight
-  if (user.username === "admin") {
-    navAdminText.innerText = "DRDO Admin Oversight";
-  } else {
-    navAdminText.innerText = "Admin Oversight (Restricted)";
-  }
 }
 
 // Tab Switching
@@ -152,7 +166,7 @@ tabSignupBtn.addEventListener("click", () => {
 // Quick Demo Access
 demoAdminBtn.addEventListener("click", () => {
   loginUsername.value = "admin";
-  loginPassword.value = "12345";
+  loginPassword.value = "1234@admin";
   rememberMeCheck.checked = true;
   loginSubmit(new Event("submit"));
 });
@@ -688,19 +702,25 @@ navReports.addEventListener("click", async () => {
   reportsModal.classList.add("open");
 });
 
-// ADMIN OVERSIGHT MODAL (FULL TELEMETRY AUDIT)
+// ADMIN OVERSIGHT MODAL (FULL TELEMETRY AUDIT - ADMIN POWER ONLY)
 navAdmin.addEventListener("click", async () => {
+  if (!currentUser || currentUser.username !== "admin") {
+    showToast("Access Denied: DRDO Administrator clearance required.", "🔒");
+    return;
+  }
   setActiveNav(navAdmin);
   await populateAdminAuditDashboard();
   adminModal.classList.add("open");
 });
 
-navAccount.addEventListener("click", () => {
+navAccount.addEventListener("click", async () => {
   setActiveNav(navAccount);
+  await populateUserAccountWorkstation(currentUser.username);
   accountModal.classList.add("open");
 });
 
-profileBtn.addEventListener("click", () => {
+profileBtn.addEventListener("click", async () => {
+  await populateUserAccountWorkstation(currentUser.username);
   accountModal.classList.add("open");
 });
 
@@ -721,9 +741,10 @@ document.querySelectorAll(".modal-close, .modal-overlay").forEach(el => {
   });
 });
 
+// ---------------- ADMIN POWERS & DASHBOARD ----------------
 async function populateAdminAuditDashboard() {
   try {
-    const res = await fetch("/api/admin/audit");
+    const res = await fetch("/api/admin/audit?username=admin");
     if (!res.ok) throw new Error("Failed to fetch admin audit telemetry");
     const data = await res.json();
 
@@ -770,22 +791,209 @@ async function populateAdminAuditDashboard() {
       });
     }
 
-    // Users Table
+    // Users Table with Governance Action
     const userTbody = document.getElementById("adminUsersTbody");
     userTbody.innerHTML = "";
     data.users.forEach(u => {
       const tr = document.createElement("tr");
+      const isMasterAdmin = (u.username === "admin");
       tr.innerHTML = `
         <td><strong>${u.username}</strong></td>
         <td>${u.name}</td>
         <td>${u.role}</td>
         <td><small>${u.created_at.split('T')[0]}</small></td>
         <td>${u.designs_count} Designs</td>
+        <td>
+          ${isMasterAdmin 
+            ? '<span style="color:#f97316;font-size:0.7rem;font-weight:700;">★ Master Root</span>' 
+            : `<button class="btn-delete-operator" onclick="deleteOperatorAccount('${u.username}')">Decommission</button>`}
+        </td>
       `;
       userTbody.appendChild(tr);
     });
   } catch (err) {
     console.error("Admin audit fetch error:", err);
+    showToast("Failed to load admin audit: " + err.message, "✕");
+  }
+}
+
+// Admin Power: Inspect Raw JSON Vault
+const adminInspectRawVaultBtn = document.getElementById("adminInspectRawVaultBtn");
+const rawVaultContainer = document.getElementById("rawVaultContainer");
+const rawVaultPre = document.getElementById("rawVaultPre");
+const closeRawVaultBtn = document.getElementById("closeRawVaultBtn");
+
+if (adminInspectRawVaultBtn) {
+  adminInspectRawVaultBtn.addEventListener("click", async () => {
+    try {
+      showToast("Inspecting Raw JSON Vault...", "📜");
+      const res = await fetch("/api/admin/raw-vault?username=admin");
+      if (!res.ok) throw new Error("Could not fetch raw vault");
+      const data = await res.json();
+      rawVaultPre.innerText = JSON.stringify(data, null, 2);
+      rawVaultContainer.classList.remove("hidden");
+    } catch (e) {
+      showToast("Raw vault error: " + e.message, "✕");
+    }
+  });
+}
+
+if (closeRawVaultBtn) {
+  closeRawVaultBtn.addEventListener("click", () => {
+    rawVaultContainer.classList.add("hidden");
+  });
+}
+
+// Admin Power: Purge Old Logs
+const adminPurgeLogsBtn = document.getElementById("adminPurgeLogsBtn");
+if (adminPurgeLogsBtn) {
+  adminPurgeLogsBtn.addEventListener("click", async () => {
+    if (!confirm("Confirm DRDO Protocol: Purge old activity logs and archive session telemetry?")) return;
+    try {
+      const res = await fetch("/api/admin/purge-logs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ admin_username: "admin" })
+      });
+      if (!res.ok) throw new Error("Purge failed");
+      showToast("System Logs Cleaned & Reset!");
+      await populateAdminAuditDashboard();
+    } catch (e) {
+      showToast("Purge failed: " + e.message, "✕");
+    }
+  });
+}
+
+// Admin Power: Decommission Operator Account
+window.deleteOperatorAccount = async function(targetUsername) {
+  if (!confirm(`Are you sure you want to decommission operator account '${targetUsername}'?`)) return;
+  try {
+    const res = await fetch(`/api/admin/user/${encodeURIComponent(targetUsername)}?admin_username=admin`, {
+      method: "DELETE"
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || "Decommission failed");
+    }
+    showToast(`Operator '${targetUsername}' Decommissioned!`);
+    await populateAdminAuditDashboard();
+  } catch (e) {
+    showToast("Error: " + e.message, "✕");
+  }
+};
+
+// Admin Power: Toggle Deep Polar Cryo-Stress Override (-80°C)
+function triggerCryoStressOverride() {
+  if (!currentUser || currentUser.username !== "admin") {
+    showToast("Access Denied: Only Chief Admin has Cryo-Stress Override clearance.", "🔒");
+    return;
+  }
+  tempSlider.min = "-80";
+  tempSlider.value = "-80";
+  tempBadge.innerText = "-80";
+  
+  occupancySelect.value = "50";
+  materialSelect.value = "Aerogel Insulation Composite";
+  thicknessSlider.value = "350";
+  thicknessBadge.innerText = "350";
+
+  showToast("⚡ ADMIN POLAR OVERRIDE: -80°C Cryo-Freeze (50 Soldiers) Engaged!", "⚡");
+  runSolver(false);
+}
+
+const adminToggleStressBtn = document.getElementById("adminToggleStressBtn");
+if (adminToggleStressBtn) {
+  adminToggleStressBtn.addEventListener("click", () => {
+    triggerCryoStressOverride();
+    adminModal.classList.remove("open");
+  });
+}
+
+const adminPowerStressBtn = document.getElementById("adminPowerStressBtn");
+if (adminPowerStressBtn) {
+  adminPowerStressBtn.addEventListener("click", triggerCryoStressOverride);
+}
+
+// ---------------- NORMAL USER COMPARTMENTALIZED WORKSTATION ----------------
+async function populateUserAccountWorkstation(username) {
+  try {
+    const res = await fetch(`/api/user/account?username=${encodeURIComponent(username)}`);
+    if (!res.ok) throw new Error("Failed to load user account profile");
+    const data = await res.json();
+
+    const u = data.user;
+    const isAdmin = data.is_admin;
+
+    document.getElementById("accountUsername").innerText = u.username;
+    document.getElementById("accountFullName").innerText = u.name;
+    document.getElementById("accountRolePill").innerText = u.role;
+
+    const modalTitle = document.getElementById("accountModalTitle");
+    const modalSub = document.getElementById("accountModalSub");
+    const stationTag = document.getElementById("accountStationTag");
+    const clearanceText = document.getElementById("accountClearanceText");
+    const sandboxNotice = document.getElementById("userSandboxNotice");
+
+    if (isAdmin) {
+      if (modalTitle) modalTitle.innerText = "Chief Administrator Workstation Profile";
+      if (modalSub) modalSub.innerText = "Full Master Clearance — Root Access to All Tactical Subsystems";
+      if (stationTag) stationTag.innerText = "Assigned Station: DRDO Central Defense Command";
+      if (clearanceText) clearanceText.innerText = "DRDO Root Master (Whole System Access)";
+      if (sandboxNotice) {
+        sandboxNotice.style.display = "none";
+      }
+    } else {
+      if (modalTitle) modalTitle.innerText = "My Operator Profile & Personal Workstation";
+      if (modalSub) modalSub.innerText = "Personal session logs and individual simulation archive";
+      if (stationTag) stationTag.innerText = "Assigned Station: Alpine Tactical Enclosure";
+      if (clearanceText) clearanceText.innerText = "Standard Operator (Personal Sandbox Only)";
+      if (sandboxNotice) {
+        sandboxNotice.style.display = "flex";
+      }
+    }
+
+    // 3 Personal KPIs
+    document.getElementById("userMySessions").innerText = data.personal_metrics.my_total_logins;
+    document.getElementById("userMySims").innerText = data.personal_metrics.my_total_simulations;
+    document.getElementById("userMyReports").innerText = data.personal_metrics.my_total_reports;
+
+    // Personal Logins Table
+    const loginsTbody = document.getElementById("userLoginsTbody");
+    loginsTbody.innerHTML = "";
+    if (data.personal_logins.length === 0) {
+      loginsTbody.innerHTML = "<tr><td colspan='4'>No sessions recorded for your account.</td></tr>";
+    } else {
+      data.personal_logins.forEach(log => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><small>${log.timestamp}</small></td>
+          <td>${log.client}</td>
+          <td>${log.role}</td>
+          <td><span style="color:${log.remember_me ? '#10b981' : '#64748b'}">${log.remember_me ? '✓ Enabled' : 'No'}</span></td>
+        `;
+        loginsTbody.appendChild(tr);
+      });
+    }
+
+    // Personal Activity Table
+    const actTbody = document.getElementById("userActivityTbody");
+    actTbody.innerHTML = "";
+    if (data.personal_activities.length === 0) {
+      actTbody.innerHTML = "<tr><td colspan='3'>You have not executed any thermal simulations yet.</td></tr>";
+    } else {
+      data.personal_activities.forEach(act => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><small>${act.timestamp}</small></td>
+          <td><span class="comfort-badge-pill" style="font-size:0.65rem;padding:2px 6px;">${act.action}</span></td>
+          <td><small>${act.details}</small></td>
+        `;
+        actTbody.appendChild(tr);
+      });
+    }
+  } catch (err) {
+    console.error("Personal workstation error:", err);
+    showToast("Profile load error: " + err.message, "✕");
   }
 }
 
@@ -793,10 +1001,19 @@ async function populateReportsModal() {
   const list = document.getElementById("reportHistoryList");
   list.innerHTML = "<div>Fetching blueprint archive...</div>";
   try {
-    const res = await fetch("/api/admin/audit");
-    const data = await res.json();
+    const isUserAdmin = (currentUser && currentUser.username === "admin");
+    let reports = [];
+    if (isUserAdmin) {
+      const res = await fetch("/api/admin/audit?username=admin");
+      const data = await res.json();
+      reports = data.reports_generated || [];
+    } else {
+      const res = await fetch(`/api/user/account?username=${encodeURIComponent(currentUser.username)}`);
+      const data = await res.json();
+      reports = data.personal_reports || [];
+    }
+
     list.innerHTML = "";
-    const reports = data.reports_generated || [];
     if (reports.length === 0) {
       list.innerHTML = "<p>No blueprint reports exported yet. Click 'DOWNLOAD EXECUTIVE PDF' on the dashboard to generate your first document.</p>";
       return;

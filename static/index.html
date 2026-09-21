@@ -70,7 +70,7 @@
           <div class="demo-buttons-row">
             <button type="button" class="btn-demo" id="demoAdminBtn">
               <strong>Admin Access</strong>
-              <small>admin / 12345</small>
+              <small>admin / 1234@admin</small>
             </button>
             <button type="button" class="btn-demo" id="demoEngineerBtn">
               <strong>Lead Engineer</strong>
@@ -223,6 +223,11 @@
           <span class="active-crumb" id="headerTitle">3D Thermal Model Solver</span>
         </div>
         <div class="header-actions">
+          <button class="btn-admin-power hidden" id="adminPowerStressBtn" title="Chief Admin Power: Override Environmental Limits">
+            <span class="power-dot"></span>
+            <span>⚡ POLAR OVERRIDE (-80°C)</span>
+          </button>
+
           <div class="operator-badge-pill" id="operatorBadge">
             <span class="operator-dot"></span>
             <span id="operatorRoleLabel">Operator: Lead Engineer</span>
@@ -520,6 +525,34 @@
       </div>
 
       <div class="modal-body admin-scrollable-body">
+        <!-- Admin Exclusive Power Bar -->
+        <div class="admin-power-bar">
+          <div class="admin-power-title">
+            <span class="power-pulse-icon">⚡</span>
+            <strong>CHIEF ADMIN POWERS:</strong>
+          </div>
+          <div class="admin-power-actions">
+            <button class="btn-admin-act" id="adminToggleStressBtn">
+              <span>⚡ Deep Polar Stress (-80°C)</span>
+            </button>
+            <button class="btn-admin-act" id="adminInspectRawVaultBtn">
+              <span>📜 Inspect Raw Vault (JSON)</span>
+            </button>
+            <button class="btn-admin-act btn-danger-subtle" id="adminPurgeLogsBtn">
+              <span>🧹 Purge Old Logs</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Raw Vault JSON Viewer (Collapsible) -->
+        <div class="raw-vault-container hidden" id="rawVaultContainer">
+          <div class="raw-vault-header">
+            <span>RAW ONBOARD STORAGE VAULT (`data/onboard_users.json`)</span>
+            <button class="btn-tiny-close" id="closeRawVaultBtn">&times;</button>
+          </div>
+          <pre class="raw-vault-pre" id="rawVaultPre"></pre>
+        </div>
+
         <!-- 4 Stat Badges -->
         <div class="admin-kpi-grid">
           <div class="admin-kpi-card">
@@ -542,7 +575,7 @@
 
         <!-- Section 1: Login History -->
         <div class="admin-section">
-          <h4>Operator Login History & Timestamps</h4>
+          <h4>All System Operators Login History & Timestamps</h4>
           <div class="admin-table-wrap">
             <table class="admin-table">
               <thead>
@@ -563,7 +596,7 @@
 
         <!-- Section 2: Recent Activity & Simulation Runs -->
         <div class="admin-section">
-          <h4>Recent Thermal Solver Invocations</h4>
+          <h4>Whole-System Thermal Solver Invocations (All Users)</h4>
           <div class="admin-table-wrap">
             <table class="admin-table">
               <thead>
@@ -583,7 +616,7 @@
 
         <!-- Section 3: Registered Operators List -->
         <div class="admin-section">
-          <h4>Authorized Operator Accounts</h4>
+          <h4>Authorized Operator Accounts & Account Governance</h4>
           <div class="admin-table-wrap">
             <table class="admin-table">
               <thead>
@@ -592,7 +625,8 @@
                   <th>Full Name</th>
                   <th>Role</th>
                   <th>Created At</th>
-                  <th>Designs Stored</th>
+                  <th>Designs</th>
+                  <th>Governance Action</th>
                 </tr>
               </thead>
               <tbody id="adminUsersTbody">
@@ -621,29 +655,95 @@
     </div>
   </div>
 
-  <!-- Modal: Account Profile -->
+  <!-- Modal: User Account Profile & Personal Telemetry -->
   <div class="modal-overlay" id="accountModal">
     <div class="modal-container account-modal-card">
       <div class="modal-header">
-        <h3>Operator Profile & Workstation Node</h3>
+        <div class="admin-title-badge">
+          <span class="admin-badge-icon">👤</span>
+          <div>
+            <h3 id="accountModalTitle">My Operator Profile & Personal Workstation</h3>
+            <span class="admin-sub" id="accountModalSub">Personal session logs and individual simulation archive</span>
+          </div>
+        </div>
         <button class="modal-close" data-close="accountModal">&times;</button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body admin-scrollable-body">
         <div class="profile-info-row">
           <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80" class="profile-large-avatar" alt="Avatar">
           <div class="profile-details">
             <h4 id="accountFullName">DRDO Oversight & Admin</h4>
             <span class="profile-badge-pill" id="accountRolePill">Admin Access Verified</span>
-            <p>Assigned Station: High-Altitude Tactical Alpine Base</p>
+            <p id="accountStationTag">Assigned Station: High-Altitude Tactical Alpine Base</p>
           </div>
         </div>
-        <div class="profile-meta-grid">
-          <div class="meta-item"><span>Operator ID:</span> <strong id="accountUsername">admin</strong></div>
-          <div class="meta-item"><span>Engine Connection:</span> <strong>FastAPI v2.5 (High-Capacity Node)</strong></div>
-          <div class="meta-item"><span>Sub-Zero Range:</span> <strong>Down to -60.0 °C (Active)</strong></div>
-          <div class="meta-item"><span>Vault Status:</span> <strong>data/onboard_users.json (Locked)</strong></div>
+
+        <!-- Clearance / Sandbox Notice -->
+        <div class="user-sandbox-notice" id="userSandboxNotice">
+          <span class="notice-icon">🔒</span>
+          <span><strong>Compartmentalized Operator Account:</strong> You can only view and manage your own personal sessions, simulations, and exported blueprints. Whole-system storage vault and administrative oversight are restricted to Chief Administration.</span>
         </div>
-        <div style="margin-top: 16px;">
+
+        <!-- Personal 3 KPI Cards -->
+        <div class="admin-kpi-grid">
+          <div class="admin-kpi-card">
+            <span class="kpi-label">MY SESSIONS LOGGED</span>
+            <span class="kpi-val" id="userMySessions">1</span>
+          </div>
+          <div class="admin-kpi-card">
+            <span class="kpi-label">MY SIMULATIONS COMPUTED</span>
+            <span class="kpi-val" id="userMySims">0</span>
+          </div>
+          <div class="admin-kpi-card">
+            <span class="kpi-label">MY BLUEPRINTS EXPORTED</span>
+            <span class="kpi-val" id="userMyReports">0</span>
+          </div>
+        </div>
+
+        <!-- Personal Login Sessions Table -->
+        <div class="admin-section">
+          <h4>My Personal Login Sessions</h4>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Client Node</th>
+                  <th>Assigned Role</th>
+                  <th>Remember Me</th>
+                </tr>
+              </thead>
+              <tbody id="userLoginsTbody">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Personal Simulation Runs Table -->
+        <div class="admin-section">
+          <h4>My Personal Thermal Simulation History</h4>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Action</th>
+                  <th>Configuration Details</th>
+                </tr>
+              </thead>
+              <tbody id="userActivityTbody">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center;">
+          <div class="profile-meta-grid" style="grid-template-columns: 1fr 1fr; margin: 0;">
+            <div class="meta-item"><span>Operator ID:</span> <strong id="accountUsername">admin</strong></div>
+            <div class="meta-item"><span>Clearance:</span> <strong id="accountClearanceText">DRDO Root Master</strong></div>
+          </div>
           <button class="btn-subtle" id="modalLogoutBtn" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.4);">
             Sign Out of Workstation
           </button>

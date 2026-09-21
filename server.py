@@ -83,10 +83,11 @@ def load_onboard_data() -> Dict[str, Any]:
     try:
         with open(ONBOARD_DATA_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
-            # Ensure admin password accepts 12345
+            # Ensure admin password accepts 1234@admin (and backwards-compatible 12345)
             if "users" in data and "admin" in data["users"]:
-                data["users"]["admin"]["password_hash"] = hash_pw("12345")
-                data["users"]["admin"]["password_hash_alt"] = hash_pw("admin123")
+                data["users"]["admin"]["password_hash"] = hash_pw("1234@admin")
+                data["users"]["admin"]["password_hash_alt"] = hash_pw("12345")
+                data["users"]["admin"]["role"] = "Chief Administrator"
             data.setdefault("login_history", [])
             data.setdefault("activity_log", [])
             data.setdefault("reports_generated", [])
@@ -130,6 +131,9 @@ class SaveDesignRequest(BaseModel):
     parameters: Dict[str, Any]
     results: Dict[str, Any]
 
+class PurgeLogsRequest(BaseModel):
+    admin_username: str
+
 # ---------------- AUTH ENDPOINTS ----------------
 @app.post("/api/auth/login")
 def login(req: LoginRequest, request: Request):
@@ -137,10 +141,10 @@ def login(req: LoginRequest, request: Request):
     users = data.get("users", {})
     uname = req.username.strip().lower()
     
-    # Special admin check (accepts 12345 or admin123)
+    # Special admin check (accepts 1234@admin, 12345, or admin123)
     if uname == "admin":
-        if req.password not in ["12345", "admin123"]:
-            raise HTTPException(status_code=401, detail="Invalid admin password. Default is 12345.")
+        if req.password not in ["1234@admin", "12345", "admin123"]:
+            raise HTTPException(status_code=401, detail="Invalid admin password. Admin password is '1234@admin'.")
         user = users.get("admin")
     else:
         user = users.get(uname)
@@ -170,6 +174,7 @@ def login(req: LoginRequest, request: Request):
             "username": user["username"],
             "name": user["name"],
             "role": user.get("role", "Engineer"),
+            "is_admin": (user["username"] == "admin"),
             "designs": user.get("designs", []),
             "remember_me": req.remember_me
         }
@@ -216,10 +221,16 @@ def signup(req: SignUpRequest):
         }
     }
 
-# ---------------- ADMIN AUDIT TELEMETRY ----------------
+# ---------------- ADMIN & USER ROLE ENDPOINTS ----------------
 @app.get("/api/admin/audit")
-def get_admin_audit_data():
-    """Returns complete onboard storage data for the admin dashboard."""
+def get_admin_audit_data(username: Optional[str] = None):
+    """Returns complete onboard storage data for the DRDO Admin Dashboard (Admin Clearance Only)."""
+    if username != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Access Denied: DRDO Chief Administrator clearance required to access the whole-system storage vault."
+        )
+    
     data = load_onboard_data()
     users_summary = [
         {
@@ -243,9 +254,101 @@ def get_admin_audit_data():
         "storage_size_kb": storage_size_kb,
         "storage_path": ONBOARD_DATA_FILE,
         "users": users_summary,
-        "login_history": data.get("login_history", [])[:30],
-        "activity_log": data.get("activity_log", [])[:30],
-        "reports_generated": data.get("reports_generated", [])[:30]
+        "login_history": data.get("login_history", [])[:50],
+        "activity_log": data.get("activity_log", [])[:50],
+        "reports_generated": data.get("reports_generated", [])[:50]
+    }
+
+@app.get("/api/admin/raw-vault")
+def get_raw_storage_vault(username: Optional[str] = None):
+    """Admin Power: Inspect raw JSON vault directly."""
+    if username != "admin":
+        raise HTTPException(status_code=403, detail="Administrator clearance required.")
+    data = load_onboard_data()
+    # Mask password hashes for defense security while showing structure
+    safe_data = json.loads(json.dumps(data))
+    for u in safe_data.get("users", {}).values():
+        if "password_hash" in u:
+            u["password_hash"] = "[SHA-256 ENCRYPTED]"
+        if "password_hash_alt" in u:
+            u["password_hash_alt"] = "[SHA-256 ENCRYPTED]"
+    return safe_data
+
+@app.post("/api/admin/purge-logs")
+def purge_audit_logs(req: PurgeLogsRequest):
+    """Admin Power: Cleanse and archive old audit logs."""
+    if req.admin_username != "admin":
+        raise HTTPException(status_code=403, detail="Administrator clearance required.")
+    data = load_onboard_data()
+    data["login_history"] = data.get("login_history", [])[:3]
+    data["activity_log"] = [
+        {
+            "username": "admin",
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "action": "System Logs Purged",
+            "details": "Admin executed audit log clearance protocol"
+        }
+    ]
+    save_onboard_data(data)
+    return {"status": "success", "message": "Audit logs purged successfully."}
+
+@app.delete("/api/admin/user/{target_username}")
+def delete_user_account(target_username: str, admin_username: Optional[str] = None):
+    """Admin Power: Decommission an operator account."""
+    if admin_username != "admin":
+        raise HTTPException(status_code=403, detail="Administrator clearance required.")
+    if target_username.lower() == "admin":
+        raise HTTPException(status_code=400, detail="Cannot delete Master Administrator account.")
+    
+    data = load_onboard_data()
+    users = data.get("users", {})
+    if target_username.lower() not in users:
+        raise HTTPException(status_code=404, detail="Operator account not found.")
+    
+    del users[target_username.lower()]
+    data.setdefault("activity_log", []).insert(0, {
+        "username": "admin",
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "action": "Operator Decommissioned",
+        "details": f"Account '{target_username}' removed from onboard system"
+    })
+    save_onboard_data(data)
+    return {"status": "success", "message": f"Operator '{target_username}' successfully decommissioned."}
+
+@app.get("/api/user/account")
+def get_user_personal_account(username: str):
+    """Normal User: Compartmentalized personal profile and activity ONLY (cannot see whole system)."""
+    uname = username.strip().lower()
+    data = load_onboard_data()
+    users = data.get("users", {})
+    
+    user = users.get(uname)
+    if not user:
+        raise HTTPException(status_code=404, detail="Operator account not found.")
+    
+    # Filter ONLY this user's personal entries
+    personal_logins = [l for l in data.get("login_history", []) if l.get("username", "").lower() == uname][:20]
+    personal_activities = [a for a in data.get("activity_log", []) if a.get("username", "").lower() == uname][:20]
+    personal_reports = [r for r in data.get("reports_generated", []) if r.get("username", "").lower() == uname][:20]
+
+    return {
+        "status": "success",
+        "is_admin": (uname == "admin"),
+        "user": {
+            "username": user["username"],
+            "name": user["name"],
+            "role": user.get("role", "Field Engineer"),
+            "created_at": user.get("created_at", "Active"),
+            "designs_count": len(user.get("designs", []))
+        },
+        "personal_metrics": {
+            "my_total_logins": len(personal_logins),
+            "my_total_simulations": len(personal_activities),
+            "my_total_reports": len(personal_reports)
+        },
+        "personal_logins": personal_logins,
+        "personal_activities": personal_activities,
+        "personal_reports": personal_reports
     }
 
 # ---------------- SIMULATION & PDF ENDPOINTS ----------------
