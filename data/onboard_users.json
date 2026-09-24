@@ -52,6 +52,22 @@
   },
   "login_history": [
     {
+      "username": "admin",
+      "timestamp": "2026-09-21 23:40:04",
+      "role": "Chief Administrator",
+      "status": "Success",
+      "remember_me": true,
+      "client": "127.0.0.1"
+    },
+    {
+      "username": "admin",
+      "timestamp": "2026-09-21 23:38:03",
+      "role": "Chief Administrator",
+      "status": "Success",
+      "remember_me": true,
+      "client": "127.0.0.1"
+    },
+    {
       "username": "engineer",
       "timestamp": "2026-09-21 23:24:15",
       "role": "Lead Thermal Systems Engineer",
@@ -93,6 +109,36 @@
     }
   ],
   "activity_log": [
+    {
+      "username": "admin",
+      "timestamp": "2026-09-21 23:47:09",
+      "action": "Simulation Computed",
+      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+    },
+    {
+      "username": "admin",
+      "timestamp": "2026-09-21 23:41:27",
+      "action": "Simulation Computed",
+      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+    },
+    {
+      "username": "admin",
+      "timestamp": "2026-09-21 23:40:08",
+      "action": "Simulation Computed",
+      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+    },
+    {
+      "username": "admin",
+      "timestamp": "2026-09-21 23:39:37",
+      "action": "Simulation Computed",
+      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+    },
+    {
+      "username": "admin",
+      "timestamp": "2026-09-21 23:38:05",
+      "action": "Simulation Computed",
+      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+    },
     {
       "username": "engineer",
       "timestamp": "2026-09-21 23:33:46",
