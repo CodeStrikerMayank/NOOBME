@@ -156,7 +156,44 @@ function applyUserSession(user) {
 }
 
 // Tab Switching
+function clearAuthFeedback() {
+  const el = document.getElementById("authFeedback");
+  if (el) {
+    el.style.display = "none";
+    el.innerHTML = "";
+    el.className = "auth-feedback";
+  }
+}
+
+function showAuthFeedback(msg, isError = true) {
+  const el = document.getElementById("authFeedback");
+  if (el) {
+    el.className = `auth-feedback ${isError ? "error" : "success"}`;
+    el.innerHTML = `<span>${isError ? "⚠️" : "✓"}</span><span>${msg}</span>`;
+    el.style.display = "flex";
+  } else {
+    showToast(msg, isError ? "⚠️" : "✓");
+  }
+}
+
+async function parseApiError(res, fallbackMsg) {
+  try {
+    const text = await res.text();
+    try {
+      const json = JSON.parse(text);
+      if (json && json.detail) return json.detail;
+      if (json && json.message) return json.message;
+    } catch (_) {
+      if (text && text.trim().length > 0 && text.length < 200 && !text.includes("<")) {
+        return text.trim();
+      }
+    }
+  } catch (_) {}
+  return `${fallbackMsg} (Status ${res.status})`;
+}
+
 tabLoginBtn.addEventListener("click", () => {
+  clearAuthFeedback();
   tabLoginBtn.classList.add("active");
   tabSignupBtn.classList.remove("active");
   loginForm.classList.remove("hidden");
@@ -164,6 +201,7 @@ tabLoginBtn.addEventListener("click", () => {
 });
 
 tabSignupBtn.addEventListener("click", () => {
+  clearAuthFeedback();
   tabSignupBtn.classList.add("active");
   tabLoginBtn.classList.remove("active");
   signupForm.classList.remove("hidden");
@@ -172,6 +210,7 @@ tabSignupBtn.addEventListener("click", () => {
 
 // Quick Demo Access
 demoAdminBtn.addEventListener("click", () => {
+  clearAuthFeedback();
   loginUsername.value = "admin";
   loginPassword.value = "1234@admin";
   rememberMeCheck.checked = true;
@@ -179,6 +218,7 @@ demoAdminBtn.addEventListener("click", () => {
 });
 
 demoEngineerBtn.addEventListener("click", () => {
+  clearAuthFeedback();
   loginUsername.value = "engineer";
   loginPassword.value = "engineer123";
   rememberMeCheck.checked = true;
@@ -188,9 +228,22 @@ demoEngineerBtn.addEventListener("click", () => {
 // Login Form Submit
 async function loginSubmit(e) {
   if (e && e.preventDefault) e.preventDefault();
+  clearAuthFeedback();
   const username = loginUsername.value.trim();
   const password = loginPassword.value.trim();
   const remember = rememberMeCheck.checked;
+
+  if (!username || !password) {
+    showAuthFeedback("Please enter both username and password.", true);
+    return;
+  }
+
+  const submitBtn = document.getElementById("loginSubmitBtn");
+  const origText = submitBtn ? submitBtn.innerHTML : "";
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = "<span>Authenticating...</span>";
+  }
 
   try {
     const res = await fetch("/api/auth/login", {
@@ -200,8 +253,8 @@ async function loginSubmit(e) {
     });
 
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.detail || "Authentication failed.");
+      const errMsg = await parseApiError(res, "Authentication failed.");
+      throw new Error(errMsg);
     }
 
     const data = await res.json();
@@ -225,7 +278,12 @@ async function loginSubmit(e) {
       showToast(`Welcome, ${user.name} (${user.role})`);
     });
   } catch (err) {
-    alert("Authentication Error: " + err.message);
+    showAuthFeedback(err.message || "Authentication error occurred.", true);
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = origText;
+    }
   }
 }
 loginForm.addEventListener("submit", loginSubmit);
@@ -233,6 +291,7 @@ loginForm.addEventListener("submit", loginSubmit);
 // Signup Form Submit
 signupForm.addEventListener("submit", async (e) => {
   e.preventDefault();
+  clearAuthFeedback();
   const name = document.getElementById("signupName").value.trim();
   const username = document.getElementById("signupUsername").value.trim();
   const password = document.getElementById("signupPassword").value.trim();
@@ -246,8 +305,8 @@ signupForm.addEventListener("submit", async (e) => {
     });
 
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.detail || "Registration failed.");
+      const errMsg = await parseApiError(res, "Registration failed.");
+      throw new Error(errMsg);
     }
 
     const data = await res.json();
@@ -265,7 +324,7 @@ signupForm.addEventListener("submit", async (e) => {
       showToast(`Account Created & Verified for ${user.name}`);
     });
   } catch (err) {
-    alert("Registration Error: " + err.message);
+    showAuthFeedback(err.message || "Registration error occurred.", true);
   }
 });
 

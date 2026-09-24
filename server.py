@@ -36,68 +36,100 @@ ONBOARD_DATA_FILE = os.path.join(DATA_DIR, "onboard_users.json")
 def hash_pw(password: str) -> str:
     return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
-def load_onboard_data() -> Dict[str, Any]:
-    if not os.path.exists(ONBOARD_DATA_FILE):
-        default_data = {
-            "users": {
-                "admin": {
-                    "username": "admin",
-                    "name": "DRDO Oversight & Admin",
-                    "password_hash": hash_pw("12345"),
-                    "password_hash_alt": hash_pw("admin123"),
-                    "role": "Chief Administrator",
-                    "created_at": datetime.now().isoformat(),
-                    "designs": []
-                },
-                "engineer": {
-                    "username": "engineer",
-                    "name": "Lead Thermal Systems Engineer",
-                    "password_hash": hash_pw("engineer123"),
-                    "password_hash_alt": hash_pw("12345"),
-                    "role": "Alpine Design Engineer",
-                    "created_at": datetime.now().isoformat(),
-                    "designs": []
-                }
-            },
-            "login_history": [
-                {
-                    "username": "admin",
-                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "role": "Chief Administrator",
-                    "status": "Success",
-                    "client": "Onboard Workstation"
-                }
-            ],
-            "activity_log": [
-                {
-                    "username": "system",
-                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "action": "Database Initialized",
-                    "details": "Ready for high-capacity sub-zero thermal simulation"
-                }
-            ],
-            "reports_generated": []
+def get_default_users() -> Dict[str, Any]:
+    return {
+        "admin": {
+            "username": "admin",
+            "name": "DRDO Oversight & Admin",
+            "password_hash": hash_pw("1234@admin"),
+            "password_hash_alt": hash_pw("12345"),
+            "role": "Chief Administrator",
+            "created_at": "2026-09-20T10:02:10.737829",
+            "designs": []
+        },
+        "engineer": {
+            "username": "engineer",
+            "name": "Lead Thermal Systems Engineer",
+            "password_hash": hash_pw("engineer123"),
+            "password_hash_alt": hash_pw("12345"),
+            "role": "Alpine Design Engineer",
+            "created_at": "2026-09-20T10:02:10.737882",
+            "designs": []
         }
+    }
+
+def load_onboard_data() -> Dict[str, Any]:
+    default_users = get_default_users()
+    default_data = {
+        "users": default_users,
+        "login_history": [
+            {
+                "username": "admin",
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "role": "Chief Administrator",
+                "status": "Success",
+                "client": "Onboard Workstation"
+            }
+        ],
+        "activity_log": [
+            {
+                "username": "system",
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "action": "Database Initialized",
+                "details": "Ready for high-capacity sub-zero thermal simulation"
+            }
+        ],
+        "reports_generated": []
+    }
+
+    if not os.path.exists(ONBOARD_DATA_FILE):
         save_onboard_data(default_data)
         return default_data
+
     try:
-        with open(ONBOARD_DATA_FILE, "r", encoding="utf-8") as f:
+        with open(ONBOARD_DATA_FILE, "r", encoding="utf-8", errors="replace") as f:
             data = json.load(f)
-            # Ensure admin password accepts 1234@admin (and backwards-compatible 12345)
-            if "users" in data and "admin" in data["users"]:
-                data["users"]["admin"]["password_hash"] = hash_pw("1234@admin")
-                data["users"]["admin"]["password_hash_alt"] = hash_pw("12345")
-                data["users"]["admin"]["role"] = "Chief Administrator"
-            data.setdefault("login_history", [])
-            data.setdefault("activity_log", [])
-            data.setdefault("reports_generated", [])
-            return data
-    except Exception:
-        return {"users": {}, "login_history": [], "activity_log": [], "reports_generated": []}
+            if not isinstance(data, dict):
+                data = {}
+    except Exception as e:
+        print(f"[WARN] Failed to load {ONBOARD_DATA_FILE}: {e}")
+        data = {}
+
+    # Guarantee user database integrity
+    users = data.get("users")
+    if not isinstance(users, dict) or not users:
+        data["users"] = default_users
+    else:
+        # Always guarantee admin user exists
+        if "admin" not in data["users"] or not isinstance(data["users"]["admin"], dict):
+            data["users"]["admin"] = default_users["admin"]
+        else:
+            data["users"]["admin"]["username"] = "admin"
+            data["users"]["admin"]["password_hash"] = hash_pw("1234@admin")
+            data["users"]["admin"]["password_hash_alt"] = hash_pw("12345")
+            data["users"]["admin"]["role"] = "Chief Administrator"
+            if not data["users"]["admin"].get("name"):
+                data["users"]["admin"]["name"] = "DRDO Oversight & Admin"
+
+        # Always guarantee engineer user exists
+        if "engineer" not in data["users"] or not isinstance(data["users"]["engineer"], dict):
+            data["users"]["engineer"] = default_users["engineer"]
+
+    data.setdefault("login_history", [])
+    data.setdefault("activity_log", [])
+    data.setdefault("reports_generated", [])
+    return data
 
 def save_onboard_data(data: Dict[str, Any]):
-    with open(ONBOARD_DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
+    try:
+        os.makedirs(DATA_DIR, exist_ok=True)
+        # Atomic write to temporary file then replace to eliminate corruptions
+        temp_file = ONBOARD_DATA_FILE + ".tmp"
+        with open(temp_file, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        os.replace(temp_file, ONBOARD_DATA_FILE)
+    except Exception as e:
+        print(f"[ERROR] Failed to save onboard data: {e}")
 
 # ---------------- MODELS ----------------
 class SolveRequest(BaseModel):
@@ -137,48 +169,61 @@ class PurgeLogsRequest(BaseModel):
 # ---------------- AUTH ENDPOINTS ----------------
 @app.post("/api/auth/login")
 def login(req: LoginRequest, request: Request):
-    data = load_onboard_data()
-    users = data.get("users", {})
-    uname = req.username.strip().lower()
-    
-    # Special admin check (accepts 1234@admin, 12345, or admin123)
-    if uname == "admin":
-        if req.password not in ["1234@admin", "12345", "admin123"]:
-            raise HTTPException(status_code=401, detail="Invalid admin password. Admin password is '1234@admin'.")
-        user = users.get("admin")
-    else:
-        user = users.get(uname)
-        if not user:
-            raise HTTPException(status_code=401, detail="User account not found.")
-        pw_hash = hash_pw(req.password)
-        if user.get("password_hash") != pw_hash and user.get("password_hash_alt") != pw_hash:
-            raise HTTPException(status_code=401, detail="Invalid username or password.")
-    
-    # Log session in audit history
-    login_entry = {
-        "username": user["username"],
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "role": user.get("role", "Engineer"),
-        "status": "Success",
-        "remember_me": bool(req.remember_me),
-        "client": request.client.host if request.client else "Localhost"
-    }
-    data.setdefault("login_history", []).insert(0, login_entry)
-    # Cap history at 100 entries
-    data["login_history"] = data["login_history"][:100]
-    save_onboard_data(data)
+    try:
+        data = load_onboard_data()
+        users = data.get("users", {})
+        uname = req.username.strip().lower()
+        
+        # Special admin check (accepts 1234@admin, 12345, or admin123)
+        if uname == "admin":
+            if req.password not in ["1234@admin", "12345", "admin123"]:
+                raise HTTPException(status_code=401, detail="Invalid admin password. Admin password is '1234@admin'.")
+            user = users.get("admin") or get_default_users()["admin"]
+        else:
+            user = users.get(uname)
+            if not user:
+                raise HTTPException(status_code=401, detail=f"User account '{req.username}' not found. Please verify username or register a new operator account.")
+            pw_hash = hash_pw(req.password)
+            if user.get("password_hash") != pw_hash and user.get("password_hash_alt") != pw_hash:
+                raise HTTPException(status_code=401, detail="Invalid username or password.")
+        
+        # Safely extract client IP
+        client_ip = "Localhost"
+        try:
+            if request and request.client and request.client.host:
+                client_ip = request.client.host
+        except Exception:
+            pass
 
-    return {
-        "status": "success",
-        "user": {
-            "username": user["username"],
-            "name": user["name"],
+        # Log session in audit history safely
+        login_entry = {
+            "username": user.get("username", uname),
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "role": user.get("role", "Engineer"),
-            "is_admin": (user["username"] == "admin"),
-            "designs": user.get("designs", []),
-            "remember_me": req.remember_me
+            "status": "Success",
+            "remember_me": bool(req.remember_me),
+            "client": client_ip
         }
-    }
+        data.setdefault("login_history", []).insert(0, login_entry)
+        data["login_history"] = data["login_history"][:100]
+        save_onboard_data(data)
+
+        return {
+            "status": "success",
+            "user": {
+                "username": user.get("username", uname),
+                "name": user.get("name", uname),
+                "role": user.get("role", "Engineer"),
+                "is_admin": (uname == "admin"),
+                "designs": user.get("designs", []),
+                "remember_me": bool(req.remember_me)
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[ERROR] Login exception: {e}")
+        raise HTTPException(status_code=500, detail=f"Authentication error: {str(e)}")
 
 @app.post("/api/auth/signup")
 def signup(req: SignUpRequest):

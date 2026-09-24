@@ -52,6 +52,38 @@
   },
   "login_history": [
     {
+      "username": "engineer",
+      "timestamp": "2026-09-24 20:22:34",
+      "role": "Lead Thermal Systems Engineer",
+      "status": "Success",
+      "remember_me": true,
+      "client": "Localhost"
+    },
+    {
+      "username": "admin",
+      "timestamp": "2026-09-24 20:22:34",
+      "role": "Chief Administrator",
+      "status": "Success",
+      "remember_me": true,
+      "client": "Localhost"
+    },
+    {
+      "username": "admin",
+      "timestamp": "2026-09-24 20:22:34",
+      "role": "Chief Administrator",
+      "status": "Success",
+      "remember_me": true,
+      "client": "Localhost"
+    },
+    {
+      "username": "admin",
+      "timestamp": "2026-09-24 20:18:28",
+      "role": "Chief Administrator",
+      "status": "Success",
+      "remember_me": true,
+      "client": "Localhost"
+    },
+    {
       "username": "admin",
       "timestamp": "2026-09-21 23:40:04",
       "role": "Chief Administrator",
@@ -113,85 +145,85 @@
       "username": "admin",
       "timestamp": "2026-09-21 23:47:09",
       "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+      "details": "Aerogel | 350mm | Tamb -45.0°C | Eff 94%"
     },
     {
       "username": "admin",
       "timestamp": "2026-09-21 23:41:27",
       "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+      "details": "Aerogel | 350mm | Tamb -45.0°C | Eff 94%"
     },
     {
       "username": "admin",
       "timestamp": "2026-09-21 23:40:08",
       "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+      "details": "Aerogel | 350mm | Tamb -45.0°C | Eff 94%"
     },
     {
       "username": "admin",
       "timestamp": "2026-09-21 23:39:37",
       "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+      "details": "Aerogel | 350mm | Tamb -45.0°C | Eff 94%"
     },
     {
       "username": "admin",
       "timestamp": "2026-09-21 23:38:05",
       "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+      "details": "Aerogel | 350mm | Tamb -45.0°C | Eff 94%"
     },
     {
       "username": "engineer",
       "timestamp": "2026-09-21 23:33:46",
       "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+      "details": "Aerogel | 350mm | Tamb -45.0°C | Eff 94%"
     },
     {
       "username": "engineer",
       "timestamp": "2026-09-21 23:24:17",
       "action": "Simulation Computed",
-      "details": " | 350mm | Tamb -80.0\u00b0C | Eff 94%"
+      "details": " | 350mm | Tamb -80.0°C | Eff 94%"
     },
     {
       "username": "admin",
       "timestamp": "2026-09-21 23:14:14",
       "action": "Simulation Computed",
-      "details": " | 350mm | Tamb -80.0\u00b0C | Eff 94%"
+      "details": " | 350mm | Tamb -80.0°C | Eff 94%"
     },
     {
       "username": "admin",
       "timestamp": "2026-09-21 23:12:07",
       "action": "Simulation Computed",
-      "details": "Aerogel | 465mm | Tamb -10.0\u00b0C | Eff 95%"
+      "details": "Aerogel | 465mm | Tamb -10.0°C | Eff 95%"
     },
     {
       "username": "admin",
       "timestamp": "2026-09-21 23:11:44",
       "action": "Simulation Computed",
-      "details": "Aerogel | 465mm | Tamb -10.0\u00b0C | Eff 95%"
+      "details": "Aerogel | 465mm | Tamb -10.0°C | Eff 95%"
     },
     {
       "username": "admin",
       "timestamp": "2026-09-21 23:11:12",
       "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -10.0\u00b0C | Eff 94%"
+      "details": "Aerogel | 350mm | Tamb -10.0°C | Eff 94%"
     },
     {
       "username": "admin",
       "timestamp": "2026-09-21 23:11:00",
       "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb 6.0\u00b0C | Eff 94%"
+      "details": "Aerogel | 350mm | Tamb 6.0°C | Eff 94%"
     },
     {
       "username": "admin",
       "timestamp": "2026-09-21 23:09:20",
       "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+      "details": "Aerogel | 350mm | Tamb -45.0°C | Eff 94%"
     },
     {
       "username": "engineer",
       "timestamp": "2026-09-21 23:08:09",
       "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0\u00b0C | Eff 94%"
+      "details": "Aerogel | 350mm | Tamb -45.0°C | Eff 94%"
     },
     {
       "username": "admin",
