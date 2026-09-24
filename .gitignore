@@ -36,6 +36,5 @@ verify_system.py
 
 # Legacy desktop app (not needed for web)
 ThermoShelter_AI.py
-
 # AI / IDE metadata
 .gemini/
