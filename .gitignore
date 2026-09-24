@@ -28,6 +28,9 @@ Reports/
 *.pdf
 *.zip
 *.rar
+data/.tmp_*
+*.bak
+*.corrupt_*
 
 # Research & dev-only files
 research/

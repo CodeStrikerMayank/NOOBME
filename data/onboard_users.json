@@ -4,304 +4,45 @@
       "username": "admin",
       "name": "DRDO Oversight & Admin",
       "password_hash": "d437b572b1619f82b40e478df9e58ed26a9edc81a8fb10146ee8308d90910904",
+      "password_hash_alt": "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5",
       "role": "Chief Administrator",
       "created_at": "2026-09-20T10:02:10.737829",
-      "designs": [],
-      "password_hash_alt": "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5"
+      "designs": []
     },
     "engineer": {
       "username": "engineer",
-      "name": "Lead Thermal Engineer",
+      "name": "Lead Thermal Systems Engineer",
       "password_hash": "80ca306ac6e68366dd0a26125c9647e0c61fac6668cec6016f5fe30fb12e99bd",
-      "role": "Lead Thermal Systems Engineer",
+      "password_hash_alt": "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5",
+      "role": "Alpine Design Engineer",
       "created_at": "2026-09-20T10:02:10.737882",
-      "designs": []
-    },
-    "captain_negi": {
-      "username": "captain_negi",
-      "name": "Captain Negi",
-      "password_hash": "c095d3f9add8a2237a0cc196cc762cf2e163edd5e7af424e04f2490d3a677f22",
-      "role": "Alpine Operations Commander",
-      "created_at": "2026-09-20T10:02:14.829828",
-      "designs": []
-    },
-    "captain_negi07": {
-      "username": "captain_negi07",
-      "name": "Captain Negi",
-      "password_hash": "95d30169a59c418b52013315fc81bc99fdf0a7b03a116f346ab628496f349ed5",
-      "role": "Thermal Systems Analyst",
-      "created_at": "2026-09-21T21:18:46.595164",
-      "designs": []
-    },
-    "test_tester_999": {
-      "username": "test_tester_999",
-      "name": "Test Officer",
-      "password_hash": "b55c8792d1ce458e279308835f8a97b580263503e76e1998e279703e35ad0c2e",
-      "role": "Alpine Field Engineer",
-      "created_at": "2026-09-21T22:35:43.471155",
-      "designs": []
-    },
-    "field_test_1790012123": {
-      "username": "field_test_1790012123",
-      "name": "Field Captain Auto",
-      "password_hash": "860be2c576347b0ff4d68efe4125a1c1ec5092b750b650c5221be0728b9dcbe8",
-      "role": "Forward Alpine Lead",
-      "created_at": "2026-09-21T23:05:25.468241",
       "designs": []
     }
   },
   "login_history": [
     {
-      "username": "engineer",
-      "timestamp": "2026-09-24 20:22:34",
-      "role": "Lead Thermal Systems Engineer",
-      "status": "Success",
-      "remember_me": true,
-      "client": "Localhost"
-    },
-    {
       "username": "admin",
-      "timestamp": "2026-09-24 20:22:34",
-      "role": "Chief Administrator",
-      "status": "Success",
-      "remember_me": true,
-      "client": "Localhost"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-24 20:22:34",
-      "role": "Chief Administrator",
-      "status": "Success",
-      "remember_me": true,
-      "client": "Localhost"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-24 20:18:28",
-      "role": "Chief Administrator",
-      "status": "Success",
-      "remember_me": true,
-      "client": "Localhost"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 23:40:04",
-      "role": "Chief Administrator",
-      "status": "Success",
-      "remember_me": true,
-      "client": "127.0.0.1"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 23:38:03",
-      "role": "Chief Administrator",
-      "status": "Success",
-      "remember_me": true,
-      "client": "127.0.0.1"
-    },
-    {
-      "username": "engineer",
-      "timestamp": "2026-09-21 23:24:15",
-      "role": "Lead Thermal Systems Engineer",
-      "status": "Success",
-      "remember_me": true,
-      "client": "127.0.0.1"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 23:09:18",
-      "role": "Chief Administrator",
-      "status": "Success",
-      "remember_me": true,
-      "client": "127.0.0.1"
-    },
-    {
-      "username": "engineer",
-      "timestamp": "2026-09-21 23:05:23",
-      "role": "Lead Thermal Systems Engineer",
-      "status": "Success",
-      "remember_me": false,
-      "client": "127.0.0.1"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 23:05:21",
+      "timestamp": "2026-09-24 20:50:27",
       "role": "Chief Administrator",
       "status": "Success",
       "remember_me": false,
-      "client": "127.0.0.1"
+      "client": "Localhost"
     },
     {
       "username": "admin",
-      "timestamp": "2026-09-21 23:05:19",
+      "timestamp": "2026-09-24 20:50:27",
       "role": "Chief Administrator",
       "status": "Success",
-      "remember_me": true,
-      "client": "127.0.0.1"
+      "client": "Onboard Workstation"
     }
   ],
   "activity_log": [
     {
-      "username": "admin",
-      "timestamp": "2026-09-21 23:47:09",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0°C | Eff 94%"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 23:41:27",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0°C | Eff 94%"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 23:40:08",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0°C | Eff 94%"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 23:39:37",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0°C | Eff 94%"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 23:38:05",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0°C | Eff 94%"
-    },
-    {
-      "username": "engineer",
-      "timestamp": "2026-09-21 23:33:46",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0°C | Eff 94%"
-    },
-    {
-      "username": "engineer",
-      "timestamp": "2026-09-21 23:24:17",
-      "action": "Simulation Computed",
-      "details": " | 350mm | Tamb -80.0°C | Eff 94%"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 23:14:14",
-      "action": "Simulation Computed",
-      "details": " | 350mm | Tamb -80.0°C | Eff 94%"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 23:12:07",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 465mm | Tamb -10.0°C | Eff 95%"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 23:11:44",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 465mm | Tamb -10.0°C | Eff 95%"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 23:11:12",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -10.0°C | Eff 94%"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 23:11:00",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb 6.0°C | Eff 94%"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 23:09:20",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0°C | Eff 94%"
-    },
-    {
-      "username": "engineer",
-      "timestamp": "2026-09-21 23:08:09",
-      "action": "Simulation Computed",
-      "details": "Aerogel | 350mm | Tamb -45.0°C | Eff 94%"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 23:05:51",
-      "action": "System Logs Purged",
-      "details": "Admin executed audit log clearance protocol"
+      "username": "system",
+      "timestamp": "2026-09-24 20:50:27",
+      "action": "Database Initialized",
+      "details": "Ready for high-capacity sub-zero thermal simulation"
     }
   ],
-  "reports_generated": [
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 23:17:03",
-      "material": "",
-      "thickness": "350mm",
-      "efficiency": "94%",
-      "heating_load": "0.5 kWh/day",
-      "diesel_liters": "0.1 L/day",
-      "status": "OVER HEATED"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 23:05:49",
-      "material": "Expanded Polystyrene (EPS)",
-      "thickness": "250mm",
-      "efficiency": "91%",
-      "heating_load": "0.5 kWh/day",
-      "diesel_liters": "0.1 L/day",
-      "status": "OVER HEATED"
-    },
-    {
-      "username": "guest",
-      "timestamp": "2026-09-21 22:35:43",
-      "material": "High-Performance Composite",
-      "thickness": "250mm",
-      "efficiency": "91%",
-      "heating_load": "0.5 kWh/day",
-      "diesel_liters": "0.1 L/day",
-      "status": "OVER HEATED"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 22:28:58",
-      "material": "Aerogel",
-      "thickness": "350mm",
-      "efficiency": "94%",
-      "heating_load": "0.5 kWh/day",
-      "diesel_liters": "0.1 L/day",
-      "status": "OVER HEATED"
-    },
-    {
-      "username": "engineer",
-      "timestamp": "2026-09-21 22:26:06",
-      "material": "",
-      "thickness": "350mm",
-      "efficiency": "94%",
-      "heating_load": "0.5 kWh/day",
-      "diesel_liters": "0.1 L/day",
-      "status": "CRITICAL POINT"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 19:19:07",
-      "material": "Aerogel",
-      "thickness": "350mm",
-      "efficiency": "94%",
-      "heating_load": "0.5 kWh/day",
-      "diesel_liters": "0.1 L/day",
-      "status": "OVER HEATED"
-    },
-    {
-      "username": "admin",
-      "timestamp": "2026-09-21 19:06:53",
-      "material": "Aerogel",
-      "thickness": "350mm",
-      "efficiency": "94%",
-      "heating_load": "0.5 kWh/day",
-      "diesel_liters": "0.1 L/day",
-      "status": "OVER HEATED"
-    }
-  ]
+  "reports_generated": []
 }

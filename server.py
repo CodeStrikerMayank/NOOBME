@@ -1,4 +1,5 @@
 import os
+import time
 import urllib.request
 import urllib.parse
 import json
@@ -28,10 +29,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ---------------- ONBOARD AUDIT & STORAGE ----------------
+import threading
+import uuid
+import shutil
+
+# ---------------- ONBOARD AUDIT & STORAGE (CORRUPTION-PROOF) ----------------
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 os.makedirs(DATA_DIR, exist_ok=True)
 ONBOARD_DATA_FILE = os.path.join(DATA_DIR, "onboard_users.json")
+ONBOARD_BACKUP_FILE = os.path.join(DATA_DIR, "onboard_users.json.bak")
+STORAGE_LOCK = threading.RLock()
 
 def hash_pw(password: str) -> str:
     return hashlib.sha256(password.encode("utf-8")).hexdigest()
@@ -58,10 +65,9 @@ def get_default_users() -> Dict[str, Any]:
         }
     }
 
-def load_onboard_data() -> Dict[str, Any]:
-    default_users = get_default_users()
-    default_data = {
-        "users": default_users,
+def get_default_database() -> Dict[str, Any]:
+    return {
+        "users": get_default_users(),
         "login_history": [
             {
                 "username": "admin",
@@ -82,25 +88,17 @@ def load_onboard_data() -> Dict[str, Any]:
         "reports_generated": []
     }
 
-    if not os.path.exists(ONBOARD_DATA_FILE):
-        save_onboard_data(default_data)
-        return default_data
+def _sanitize_data(data: Any) -> Dict[str, Any]:
+    """Ensures structure integrity, guarantees essential admin/engineer accounts, and types."""
+    default_users = get_default_users()
+    if not isinstance(data, dict):
+        data = get_default_database()
 
-    try:
-        with open(ONBOARD_DATA_FILE, "r", encoding="utf-8", errors="replace") as f:
-            data = json.load(f)
-            if not isinstance(data, dict):
-                data = {}
-    except Exception as e:
-        print(f"[WARN] Failed to load {ONBOARD_DATA_FILE}: {e}")
-        data = {}
-
-    # Guarantee user database integrity
     users = data.get("users")
     if not isinstance(users, dict) or not users:
         data["users"] = default_users
     else:
-        # Always guarantee admin user exists
+        # Guarantee admin account exists and has valid credentials
         if "admin" not in data["users"] or not isinstance(data["users"]["admin"], dict):
             data["users"]["admin"] = default_users["admin"]
         else:
@@ -111,25 +109,108 @@ def load_onboard_data() -> Dict[str, Any]:
             if not data["users"]["admin"].get("name"):
                 data["users"]["admin"]["name"] = "DRDO Oversight & Admin"
 
-        # Always guarantee engineer user exists
+        # Guarantee engineer account exists
         if "engineer" not in data["users"] or not isinstance(data["users"]["engineer"], dict):
             data["users"]["engineer"] = default_users["engineer"]
 
-    data.setdefault("login_history", [])
-    data.setdefault("activity_log", [])
-    data.setdefault("reports_generated", [])
+    if not isinstance(data.get("login_history"), list):
+        data["login_history"] = []
+    if not isinstance(data.get("activity_log"), list):
+        data["activity_log"] = []
+    if not isinstance(data.get("reports_generated"), list):
+        data["reports_generated"] = []
+
     return data
 
+def load_onboard_data() -> Dict[str, Any]:
+    with STORAGE_LOCK:
+        default_data = get_default_database()
+
+        if not os.path.exists(ONBOARD_DATA_FILE):
+            save_onboard_data(default_data)
+            return default_data
+
+        data = None
+
+        # 1. Attempt reading primary database file
+        try:
+            with open(ONBOARD_DATA_FILE, "r", encoding="utf-8", errors="replace") as f:
+                content = f.read().strip()
+                if content:
+                    data = json.loads(content)
+        except Exception as e:
+            print(f"[WARN] Primary database read failed: {e}")
+            data = None
+
+        # 2. If primary failed or empty, attempt reading backup file
+        if data is None and os.path.exists(ONBOARD_BACKUP_FILE):
+            try:
+                with open(ONBOARD_BACKUP_FILE, "r", encoding="utf-8", errors="replace") as f:
+                    content = f.read().strip()
+                    if content:
+                        data = json.loads(content)
+                        print(f"[INFO] Restored database from backup file {ONBOARD_BACKUP_FILE}")
+            except Exception as e:
+                print(f"[WARN] Backup database read failed: {e}")
+                data = None
+
+        # 3. If both failed, use default database and quarantine corrupt file
+        if data is None:
+            data = default_data
+            try:
+                corrupt_backup = ONBOARD_DATA_FILE + f".corrupt_{int(datetime.now().timestamp())}"
+                if os.path.exists(ONBOARD_DATA_FILE):
+                    shutil.copy2(ONBOARD_DATA_FILE, corrupt_backup)
+                    print(f"[WARN] Quarantined corrupted file to {corrupt_backup}")
+            except Exception:
+                pass
+
+        # 4. Enforce strict sanitization and guarantee required structure
+        sanitized = _sanitize_data(data)
+        return sanitized
+
 def save_onboard_data(data: Dict[str, Any]):
-    try:
-        os.makedirs(DATA_DIR, exist_ok=True)
-        # Atomic write to temporary file then replace to eliminate corruptions
-        temp_file = ONBOARD_DATA_FILE + ".tmp"
-        with open(temp_file, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-        os.replace(temp_file, ONBOARD_DATA_FILE)
-    except Exception as e:
-        print(f"[ERROR] Failed to save onboard data: {e}")
+    with STORAGE_LOCK:
+        try:
+            os.makedirs(DATA_DIR, exist_ok=True)
+            sanitized = _sanitize_data(data)
+
+            # Step 1: Pre-serialize in memory to guarantee zero serialization errors
+            json_text = json.dumps(sanitized, indent=2, ensure_ascii=False)
+
+            # Step 2: Write to a unique temporary file to eliminate race conditions
+            unique_tmp = os.path.join(DATA_DIR, f".tmp_{uuid.uuid4().hex}.json")
+            with open(unique_tmp, "w", encoding="utf-8") as f:
+                f.write(json_text)
+                f.flush()
+                os.fsync(f.fileno())
+
+            # Step 3: Maintain rolling backup before replacement
+            if os.path.exists(ONBOARD_DATA_FILE):
+                try:
+                    shutil.copy2(ONBOARD_DATA_FILE, ONBOARD_BACKUP_FILE)
+                except Exception:
+                    pass
+
+            # Step 4: Atomic rename/replace (with multi-attempt lock release guard)
+            replaced = False
+            for _ in range(5):
+                try:
+                    os.replace(unique_tmp, ONBOARD_DATA_FILE)
+                    replaced = True
+                    break
+                except (PermissionError, OSError):
+                    time.sleep(0.02)
+            if not replaced:
+                with open(ONBOARD_DATA_FILE, "w", encoding="utf-8") as f:
+                    f.write(json_text)
+                try:
+                    os.remove(unique_tmp)
+                except Exception:
+                    pass
+
+        except Exception as e:
+            print(f"[CRITICAL ERROR] Failed to save onboard data: {e}")
 
 # ---------------- MODELS ----------------
 class SolveRequest(BaseModel):
